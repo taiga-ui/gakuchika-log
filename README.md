@@ -1,4 +1,5 @@
 # gakuchika-log
+
 大学生活の経験を記録し、
 就活で困らないための記録アプリ。
 
@@ -8,7 +9,7 @@
 - Expo
 - TypeScript
 - Zustand
-- Expo SQLite
+- ローカル状態管理
 
 ## Concept
 
