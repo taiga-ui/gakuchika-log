@@ -7,9 +7,18 @@ import { useTheme } from "@/hooks/use-theme";
 
 const tabRouteMap = {
   index: { label: "ホーム", icon: "home-outline" },
-  "activities/index": { label: "活動", icon: "document-text-outline" },
-  "gakuchika/index": { label: "ガクチカ", icon: "sparkles-outline" },
-  "es/index": { label: "探す", icon: "search-outline" },
+  "activities/index": {
+    label: "活動",
+    icon: "document-text-outline",
+  },
+  "gakuchika/index": {
+    label: "ガクチカ",
+    icon: "sparkles-outline",
+  },
+  "es/index": {
+    label: "探す",
+    icon: "search-outline",
+  },
 };
 
 export default function TabsLayout() {
@@ -19,6 +28,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={({ route }) => {
         const key = String(route.name);
+
         const routeMeta = tabRouteMap[key as keyof typeof tabRouteMap] ?? {
           label: key,
           icon: "ellipse-outline",
@@ -28,6 +38,8 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarActiveTintColor: theme.primary,
           tabBarInactiveTintColor: theme.textTertiary,
+          tabBarShowLabel: true,
+
           tabBarStyle: {
             height: 68 + BottomTabInset,
             paddingTop: 8,
@@ -38,12 +50,13 @@ export default function TabsLayout() {
             elevation: 0,
             shadowOpacity: 0,
           },
-          tabBarShowLabel: true,
+
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: "600",
             marginTop: 4,
           },
+
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name={routeMeta.icon as keyof typeof Ionicons.glyphMap}
@@ -51,6 +64,7 @@ export default function TabsLayout() {
               color={color}
             />
           ),
+
           tabBarLabel: ({ color }) => (
             <Text
               style={{

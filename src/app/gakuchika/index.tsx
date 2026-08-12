@@ -3,55 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import { Colors, Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-
-const tabs = ["すべて表示", "ES作成中", "活動中", "完了"];
-
-const gakuchikaData = [
-  {
-    category: "サークル",
-    title: "サークルでのアプリ開発",
-    description:
-      "大学のプログラミングサークルで、学生向けの時間割管理アプリをチームで開発した経験。",
-    related: 12,
-    status: "作成中(70%)",
-    statusColor: "#2E6CED",
-    progress: 70,
-    actionIcon: "chevron-forward",
-    accent: "#E9F0FF",
-    icon: "people-outline",
-    iconColor: "#2F68D8",
-  },
-  {
-    category: "個人活動",
-    title: "個人開発：習慣化ツール",
-    description:
-      "自分が抱える課題を解決するために、毎日のルーティンを記録・分析するWebアプリを一人で作成した。",
-    related: 5,
-    status: "未着手",
-    statusColor: "#6B7280",
-    progress: 45,
-    actionIcon: "person-outline",
-    accent: "#E8F1F7",
-    icon: "person-outline",
-    iconColor: "#5C738A",
-  },
-  {
-    category: "アルバイト",
-    title: "カフェでの新人教育リーダー",
-    description:
-      "カフェの新人教育マニュアルの改善と、新人スタッフ向けメニュー導入を提案し、定着率向上に貢献した。",
-    related: 24,
-    status: "完了(100%)",
-    statusColor: "#1A9F67",
-    progress: 100,
-    actionIcon: "storefront-outline",
-    accent: "#E8F6EE",
-    icon: "storefront-outline",
-    iconColor: "#1A9F67",
-  },
-];
+import { Spacing } from "@/constants/theme";
 
 export default function GakuchikaScreen() {
   const theme = useTheme();

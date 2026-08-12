@@ -9,10 +9,10 @@ import { Screen } from "@/components/ui/screen";
 import { CATEGORY_MAP } from "@/constants/categories";
 import { TAG_MAP } from "@/constants/tags";
 import { Colors, Spacing } from "@/constants/theme";
-import { GakuchikaCard } from "@/features/gakuchika/components/gakuchika-card";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
 import { formatJapaneseDate } from "@/utils/date";
+import { GakuchikaCard } from "../../features/gakuchika/components/gakuchika-card";
 
 function SectionBlock({
   title,

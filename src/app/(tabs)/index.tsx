@@ -7,32 +7,6 @@ import { Screen } from "@/components/ui/screen";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
-const recentRecords = [
-  {
-    category: "サークル",
-    title: "新入生歓迎会の企画",
-    body: "予算管理と当日のタイムスケジュール作成を担当。当日...",
-    icon: "people-outline",
-  },
-  {
-    category: "アルバイト",
-    title: "新入教育マニュアルの改善",
-    body: "カフェのバイトで、新人スタッフがよくミスをする工程を図解入りでまとめたマニュアルを作...",
-    icon: "storefront-outline",
-  },
-];
-
-const gakuchikaOptions = [
-  {
-    label: "長期インターンでの売上向上施策",
-    checked: true,
-  },
-  {
-    label: "ゼミ長としての活動まとめ",
-    checked: false,
-  },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
