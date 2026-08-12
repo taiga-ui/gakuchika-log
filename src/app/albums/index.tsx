@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   imageOverlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-end",
     padding: 10,
   },
