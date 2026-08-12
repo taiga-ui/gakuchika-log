@@ -1,385 +1,324 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import { SectionHeader } from "@/components/ui/section-header";
-import { TagChip } from "@/components/ui/tag-chip";
-import { Colors, MaxContentWidth, Spacing } from "@/constants/theme";
+import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
 
-export default function EsScreen() {
-  const router = useRouter();
+const keywordChips = ["リーダーシップ", "ボランティア", "問題解決"];
+
+const categories = [
+  {
+    title: "サークル活動",
+    count: "12件の記録",
+    icon: "people-outline",
+    iconBg: "#E1F0FF",
+    iconColor: "#2E6CED",
+  },
+  {
+    title: "アルバイト",
+    count: "8件の記録",
+    icon: "storefront-outline",
+    iconBg: "#E9F8EC",
+    iconColor: "#1DA365",
+  },
+  {
+    title: "学業・研究",
+    count: "5件の記録",
+    icon: "book-outline",
+    iconBg: "#F4E9D7",
+    iconColor: "#B07D2E",
+  },
+  {
+    title: "その他",
+    count: "3件の記録",
+    icon: "ellipsis-horizontal",
+    iconBg: "#E5E7EB",
+    iconColor: "#70757D",
+  },
+];
+
+export default function SearchScreen() {
   const theme = useTheme();
-  const { width } = useWindowDimensions();
-  const isTwoPane = width >= 900;
-  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
-  const esDrafts = useAppStore((state) => state.esDrafts);
-  const addEsDraft = useAppStore((state) => state.addEsDraft);
-  const updateEsDraft = useAppStore((state) => state.updateEsDraft);
-
-  const draft = esDrafts[0];
-  const [selectedGakuchikaId, setSelectedGakuchikaId] = useState(
-    draft?.relatedGakuchikaId ?? gakuchikaRecords[0]?.id ?? "",
-  );
-  const [title, setTitle] = useState(draft?.title ?? "");
-  const [content, setContent] = useState(draft?.content ?? "");
-
-  useEffect(() => {
-    if (!selectedGakuchikaId && gakuchikaRecords[0]) {
-      setSelectedGakuchikaId(gakuchikaRecords[0].id);
-    }
-  }, [gakuchikaRecords, selectedGakuchikaId]);
-
-  const selectedGakuchika = useMemo(
-    () =>
-      gakuchikaRecords.find((item) => item.id === selectedGakuchikaId) ??
-      gakuchikaRecords[0],
-    [gakuchikaRecords, selectedGakuchikaId],
-  );
-
-  const relatedActivities = useMemo(() => {
-    if (!selectedGakuchika) {
-      return [];
-    }
-
-    return selectedGakuchika.relatedActivityIds;
-  }, [selectedGakuchika]);
-
-  const handleSave = () => {
-    if (draft) {
-      updateEsDraft(draft.id, {
-        title: title.trim() || draft.title,
-        prompt: draft.prompt,
-        content: content.trim() || draft.content,
-        wordCount:
-          content.trim().split(/\s+/).filter(Boolean).length || draft.wordCount,
-        relatedGakuchikaId: selectedGakuchika?.id,
-        relatedActivityIds: relatedActivities,
-      });
-    } else {
-      addEsDraft({
-        title: title.trim() || "ESドラフト",
-        prompt: "ガクチカをESに転用する",
-        content: content.trim() || "経験を自分の言葉で整理する。",
-        wordCount: content.trim().split(/\s+/).filter(Boolean).length,
-        relatedGakuchikaId: selectedGakuchika?.id,
-        relatedActivityIds: relatedActivities,
-      });
-    }
-  };
-
-  const referencePanel = (
-    <View style={[styles.panel, { backgroundColor: theme.surface }]}>
-      <SectionHeader title="参考情報" subtitle="右側の入力欄に転記して使う" />
-      <View style={styles.referenceList}>
-        {gakuchikaRecords.map((item) => (
-          <Pressable
-            key={item.id}
-            onPress={() => setSelectedGakuchikaId(item.id)}
-            style={[
-              styles.referenceCard,
-              {
-                backgroundColor:
-                  selectedGakuchika?.id === item.id
-                    ? theme.primarySoft
-                    : theme.surfaceMuted,
-                borderColor:
-                  selectedGakuchika?.id === item.id
-                    ? theme.primary
-                    : Colors.light.border,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold" style={{ color: theme.text }}>
-              {item.title}
-            </ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {item.overview}
-            </ThemedText>
-          </Pressable>
-        ))}
-      </View>
-      {selectedGakuchika ? (
-        <View style={styles.referenceDetail}>
-          <ThemedText type="smallBold" style={{ color: theme.text }}>
-            {selectedGakuchika.title}
-          </ThemedText>
-          <ThemedText
-            type="small"
-            style={{ color: theme.textSecondary, lineHeight: 22 }}
-          >
-            {selectedGakuchika.challenge}
-          </ThemedText>
-          <View style={styles.referenceTags}>
-            {selectedGakuchika.numbers.map((item) => (
-              <TagChip key={item} label={item} tone={theme.primarySoft} />
-            ))}
-          </View>
-        </View>
-      ) : null}
-    </View>
-  );
-
-  const editorPanel = (
-    <View style={[styles.panel, { backgroundColor: theme.surface }]}>
-      <View style={styles.editorHeader}>
-        <View>
-          <ThemedText type="smallBold" style={{ color: theme.text }}>
-            ES作成
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            AIを使わず、蓄積した経験から自分で書く
-          </ThemedText>
-        </View>
-        <Pressable
-          style={[styles.iconButton, { backgroundColor: theme.primarySoft }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="close" size={18} color={theme.primary} />
-        </Pressable>
-      </View>
-
-      <View style={styles.editorMetaRow}>
-        <View
-          style={[styles.counterBox, { backgroundColor: theme.surfaceMuted }]}
-        >
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            文字数
-          </ThemedText>
-          <ThemedText type="subtitle" style={{ color: theme.text }}>
-            {content.length}
-          </ThemedText>
-        </View>
-        <View
-          style={[styles.counterBox, { backgroundColor: theme.surfaceMuted }]}
-        >
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            参照数
-          </ThemedText>
-          <ThemedText type="subtitle" style={{ color: theme.text }}>
-            {relatedActivities.length}
-          </ThemedText>
-        </View>
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          タイトル
-        </ThemedText>
-        <View
-          style={[
-            styles.textShell,
-            {
-              backgroundColor: theme.surfaceMuted,
-              borderColor: Colors.light.border,
-            },
-          ]}
-        >
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="ESのタイトル"
-            placeholderTextColor={theme.textTertiary}
-            style={[styles.textInput, { color: theme.text }]}
-          />
-        </View>
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          本文
-        </ThemedText>
-        <View
-          style={[
-            styles.textShell,
-            styles.textAreaShell,
-            {
-              backgroundColor: theme.surfaceMuted,
-              borderColor: Colors.light.border,
-            },
-          ]}
-        >
-          <TextInput
-            value={content}
-            onChangeText={setContent}
-            placeholder="参考情報をもとに、自分の言葉で記述する"
-            placeholderTextColor={theme.textTertiary}
-            style={[styles.textInput, styles.textArea, { color: theme.text }]}
-            multiline
-            textAlignVertical="top"
-          />
-        </View>
-      </View>
-
-      <View style={styles.saveRow}>
-        <Pressable
-          style={[styles.saveButton, { backgroundColor: theme.primary }]}
-          onPress={handleSave}
-        >
-          <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
-            保存
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[styles.saveButton, { backgroundColor: theme.surfaceMuted }]}
-          onPress={() =>
-            router.push(`/gakuchika/${selectedGakuchika?.id ?? ""}`)
-          }
-        >
-          <ThemedText type="smallBold" style={{ color: theme.text }}>
-            関連ガクチカを見る
-          </ThemedText>
-        </Pressable>
-      </View>
-    </View>
-  );
 
   return (
     <Screen>
-      <View style={styles.pageTitleRow}>
-        <SectionHeader
-          title="ES作成"
-          subtitle="左に参考情報、右に入力欄を置く"
-        />
+      <View style={styles.topBar}>
+        <View style={styles.brandWrap}>
+          <View style={[styles.avatar, { backgroundColor: "#D8D4CF" }]}>
+            <ThemedText type="smallBold" style={{ color: "#4E4B46" }}>
+              田
+            </ThemedText>
+          </View>
+          <ThemedText
+            type="smallBold"
+            style={[styles.brandText, { color: theme.primary }]}
+          >
+            ガクチカログ
+          </ThemedText>
+        </View>
+
         <Pressable
-          style={[styles.topButton, { backgroundColor: theme.surface }]}
-          onPress={() => router.push("/gakuchika")}
+          style={[styles.settingsButton, { backgroundColor: theme.surface }]}
         >
+          <Ionicons name="settings-outline" size={28} color={theme.primary} />
+        </Pressable>
+      </View>
+
+      <ThemedText
+        type="title"
+        style={[styles.pageTitle, { color: theme.text }]}
+      >
+        探す
+      </ThemedText>
+
+      <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
+        <Ionicons name="search-outline" size={26} color={theme.textTertiary} />
+        <ThemedText type="default" style={{ color: theme.textTertiary }}>
+          過去の経験を探す
+        </ThemedText>
+
+        <Pressable
+          style={[styles.aiButton, { backgroundColor: theme.primarySoft }]}
+        >
+          <Ionicons name="sparkles-outline" size={24} color={theme.primary} />
           <ThemedText type="smallBold" style={{ color: theme.primary }}>
-            一覧へ
+            AI
           </ThemedText>
         </Pressable>
       </View>
 
-      <View style={[styles.workspace, { maxWidth: MaxContentWidth }]}>
-        {isTwoPane ? (
-          <View style={styles.twoPane}>
-            <View style={styles.pane}>{referencePanel}</View>
-            <View style={styles.pane}>{editorPanel}</View>
+      <View style={styles.section}>
+        <ThemedText
+          type="smallBold"
+          style={[styles.sectionTitle, { color: theme.text }]}
+        >
+          最近の検索キーワード
+        </ThemedText>
+
+        <View style={styles.keywordRow}>
+          {keywordChips.map((label) => (
+            <Pressable
+              key={label}
+              style={[styles.keywordChip, { backgroundColor: theme.surface }]}
+            >
+              <ThemedText type="default" style={{ color: theme.text }}>
+                {label}
+              </ThemedText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText
+          type="smallBold"
+          style={[styles.sectionTitle, { color: theme.text }]}
+        >
+          カテゴリーから探す
+        </ThemedText>
+
+        <View style={styles.categoryGrid}>
+          {categories.map((category) => (
+            <Pressable
+              key={category.title}
+              style={[styles.categoryCard, { backgroundColor: theme.surface }]}
+            >
+              <View
+                style={[
+                  styles.categoryIconWrap,
+                  { backgroundColor: category.iconBg },
+                ]}
+              >
+                <Ionicons
+                  name={category.icon as keyof typeof Ionicons.glyphMap}
+                  size={28}
+                  color={category.iconColor}
+                />
+              </View>
+
+              <ThemedText
+                type="default"
+                style={[styles.categoryTitle, { color: theme.text }]}
+              >
+                {category.title}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {category.count}
+              </ThemedText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText
+          type="smallBold"
+          style={[styles.sectionTitle, { color: theme.text }]}
+        >
+          ハイライト
+        </ThemedText>
+
+        <Pressable
+          style={[styles.highlightCard, { backgroundColor: theme.surface }]}
+        >
+          <View
+            style={[
+              styles.highlightIconWrap,
+              { backgroundColor: theme.primary },
+            ]}
+          >
+            <Ionicons name="trophy-outline" size={32} color="#FFFFFF" />
           </View>
-        ) : (
-          <View style={styles.stackPane}>
-            {referencePanel}
-            {editorPanel}
+
+          <View style={styles.highlightTextBlock}>
+            <ThemedText
+              type="default"
+              style={[styles.highlightTitle, { color: theme.text }]}
+            >
+              最も成長を感じた月
+            </ThemedText>
+            <ThemedText type="default" style={{ color: theme.textSecondary }}>
+              先月は問題解決に関する活動が活発でした。
+            </ThemedText>
           </View>
-        )}
+        </Pressable>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  pageTitleRow: {
-    gap: 12,
-    marginBottom: Spacing.three,
-  },
-  topButton: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  workspace: {
-    width: "100%",
-    alignSelf: "center",
-    paddingBottom: Spacing.six,
-  },
-  twoPane: {
-    flexDirection: "row",
-    gap: Spacing.four,
-  },
-  pane: {
-    flex: 1,
-  },
-  stackPane: {
-    gap: Spacing.four,
-  },
-  panel: {
-    borderRadius: 28,
-    padding: Spacing.four,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    gap: Spacing.four,
-  },
-  referenceList: {
-    gap: 10,
-  },
-  referenceCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: Spacing.four,
-    gap: 8,
-  },
-  referenceDetail: {
-    gap: 10,
-  },
-  referenceTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  editorHeader: {
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    marginBottom: Spacing.five,
   },
-  iconButton: {
+  brandWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+  },
+  brandText: {
+    fontSize: 18,
+    lineHeight: 26,
+  },
+  settingsButton: {
     width: 40,
     height: 40,
-    borderRadius: 14,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
-  editorMetaRow: {
-    flexDirection: "row",
-    gap: 10,
+  pageTitle: {
+    fontSize: 42,
+    lineHeight: 52,
+    fontWeight: "700",
+    marginBottom: Spacing.three,
   },
-  counterBox: {
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    minHeight: 64,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  aiButton: {
+    marginLeft: "auto",
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  section: {
+    marginTop: Spacing.five,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    lineHeight: 28,
+    marginBottom: Spacing.three,
+  },
+  keywordRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  keywordChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  categoryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+  categoryCard: {
+    width: "48%",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    padding: 18,
+    marginBottom: 12,
+    gap: 12,
+  },
+  categoryIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  categoryTitle: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: "700",
+  },
+  highlightCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    padding: 18,
+  },
+  highlightIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  highlightTextBlock: {
     flex: 1,
-    borderRadius: 18,
-    padding: Spacing.four,
     gap: 4,
   },
-  fieldGroup: {
-    gap: 8,
-  },
-  textShell: {
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.four,
-  },
-  textInput: {
-    minHeight: 52,
-    fontSize: 15,
-    paddingVertical: 14,
-  },
-  textAreaShell: {
-    paddingVertical: 6,
-  },
-  textArea: {
-    minHeight: 180,
-  },
-  saveRow: {
-    flexDirection: "row",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  saveButton: {
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+  highlightTitle: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontWeight: "700",
   },
 });
