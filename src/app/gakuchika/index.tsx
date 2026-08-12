@@ -3,10 +3,28 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import { Spacing } from "@/constants/theme";
+import { Colors, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { useAppStore } from "@/store/use-app-store";
+
+const tabs = ["一覧", "進行中"];
 
 export default function GakuchikaScreen() {
   const theme = useTheme();
+  const gakuchikaData = useAppStore((state) => state.gakuchikaRecords).map(
+    (record, index) => ({
+      title: record.title,
+      category: index === 0 ? "学業" : index === 1 ? "研究" : "実務",
+      accent: index === 0 ? "#DDEBFF" : index === 1 ? "#E6F7EF" : "#FEEAD5",
+      actionIcon: "chevron-forward" as keyof typeof Ionicons.glyphMap,
+      description: record.overview,
+      related: record.relatedActivityIds.length,
+      status: index === 0 ? "準備中" : index === 1 ? "進行中" : "完了",
+      statusColor:
+        index === 0 ? "#D97706" : index === 1 ? "#2457D6" : "#2BA46A",
+      progress: 35 + index * 30,
+    }),
+  );
 
   return (
     <Screen>

@@ -6,10 +6,32 @@ import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { useAppStore } from "@/store/use-app-store";
 
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const activities = useAppStore((state) => state.activities);
+  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
+
+  const recentActivities = activities.slice(0, 3);
+  const gakuchikaCandidates = gakuchikaRecords.slice(0, 3);
+
+  const recentRecords = recentActivities.map((activity, index) => ({
+    category: activity.categoryKey,
+    title: activity.title,
+    body: activity.body,
+    icon: (index === 0
+      ? "sparkles"
+      : index === 1
+        ? "rocket"
+        : "briefcase") as keyof typeof Ionicons.glyphMap,
+  }));
+
+  const gakuchikaOptions = gakuchikaCandidates.map((record, index) => ({
+    label: record.title,
+    checked: index === 0,
+  }));
 
   return (
     <Screen>
