@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
     position: "absolute",
     top: 0,
     left: 0,
