@@ -12,7 +12,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
   const activities = useAppStore((state) => state.activities);
-  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
   const recentActivities = activities.slice(0, 3);
   const gakuchikaCandidates = gakuchikaRecords.slice(0, 3);
@@ -68,6 +67,29 @@ export default function HomeScreen() {
         <ThemedText
           type="default"
           style={[styles.heroSubtitle, { color: theme.textSecondary }]}
+        >
+          日々の小さな活動が、将来の大きな力になります。
+        </ThemedText>
+
+        <Pressable
+          style={[styles.primaryButton, { backgroundColor: "#0B7A57" }]}
+          onPress={() => router.push("/activities/new")}
+        >
+          <Ionicons name="add" size={32} color="#FFFFFF" />
+          <ThemedText type="smallBold" style={styles.primaryButtonText}>
+            今日の活動を記録
+          </ThemedText>
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText
+          type="smallBold"
+          style={[styles.sectionTitle, { color: theme.text }]}
+        >
+          最近の記録
+        </ThemedText>
+
         >
           日々の小さな活動が、将来の大きな力になります。
         </ThemedText>
@@ -202,6 +224,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   heroSection: {
+    marginBottom: Spacing.seven,
+  },
+  heroTitle: {
+    fontSize: 30,
+    lineHeight: 56,
+    fontWeight: "700",
+    marginBottom: Spacing.one,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    lineHeight: 28,
+    marginBottom: Spacing.four,
     gap: Spacing.four,
     marginBottom: Spacing.seven,
   },
@@ -236,6 +270,15 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     marginBottom: Spacing.three,
   },
+  },
+  section: {
+    marginBottom: Spacing.seven,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    lineHeight: 28,
+    marginBottom: Spacing.three,
+  },
   recordCard: {
     borderRadius: 18,
     padding: 18,
@@ -255,6 +298,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   recordTitle: {
+    fontSize: 20,
     fontSize: 26,
     lineHeight: 34,
     fontWeight: "700",

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Colors, MaxContentWidth, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 type ScreenProps = {
@@ -15,6 +15,7 @@ export function Screen({ children, scroll = true }: ScreenProps) {
 
   const content = scroll ? (
     <ScrollView
+      contentInsetAdjustmentBehavior="never"
       contentContainerStyle={[
         styles.scrollContent,
         { backgroundColor: theme.background },
@@ -31,10 +32,9 @@ export function Screen({ children, scroll = true }: ScreenProps) {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
-      <View style={styles.decoratorTop} pointerEvents="none" />
-      <View style={styles.decoratorBottom} pointerEvents="none" />
       {content}
     </SafeAreaView>
   );
@@ -55,27 +55,6 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: "center",
     paddingHorizontal: Spacing.five,
-    paddingTop: Spacing.five,
     paddingBottom: Spacing.eight,
-  },
-  decoratorTop: {
-    position: "absolute",
-    top: -60,
-    right: -40,
-    width: 180,
-    height: 180,
-    borderRadius: 180,
-    backgroundColor: Colors.light.primarySoft,
-    opacity: 0.6,
-  },
-  decoratorBottom: {
-    position: "absolute",
-    bottom: -80,
-    left: -50,
-    width: 220,
-    height: 220,
-    borderRadius: 220,
-    backgroundColor: Colors.light.surfaceMuted,
-    opacity: 0.85,
   },
 });
