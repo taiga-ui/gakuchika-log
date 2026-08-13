@@ -1,213 +1,226 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import { SectionHeader } from "@/components/ui/section-header";
-import { StatCard } from "@/components/ui/stat-card";
 import { Colors, Spacing } from "@/constants/theme";
-import { ActivityCard } from "@/features/activities/components/activity-card";
-import { GakuchikaCard } from "@/features/gakuchika/components/gakuchika-card";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
-import { calculateStreak, countRecordsThisMonth } from "@/utils/date";
 
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const profile = useAppStore((state) => state.profile);
   const activities = useAppStore((state) => state.activities);
-  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
-  const recentActivities = [...activities]
-    .sort((left, right) => right.date.localeCompare(left.date))
-    .slice(0, 2);
-  const featuredGakuchika = gakuchikaRecords.slice(0, 2);
+  const recentActivities = activities.slice(0, 3);
+
+  const recentRecords = recentActivities.map((activity, index) => ({
+    category: activity.categoryKey,
+    title: activity.title,
+    body: activity.body,
+    icon: (index === 0
+      ? "sparkles"
+      : index === 1
+        ? "rocket"
+        : "briefcase") as keyof typeof Ionicons.glyphMap,
+  }));
 
   return (
     <Screen>
-      <View style={styles.hero}>
-        <View style={styles.heroTopRow}>
-          <View>
-            <ThemedText type="smallBold" style={{ color: theme.primary }}>
-              Gakuchika Log
-            </ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {profile.school} / {profile.faculty}
+      <View style={styles.topBar}>
+        <View style={styles.brandWrap}>
+          <View style={[styles.avatar, { backgroundColor: "#D8D4CF" }]}>
+            <ThemedText type="smallBold" style={{ color: "#4E4B46" }}>
+              田
             </ThemedText>
           </View>
-          <Pressable
-            style={[styles.profileChip, { backgroundColor: theme.surface }]}
-            onPress={() => router.push("/profile")}
+          <ThemedText
+            type="smallBold"
+            style={[styles.brandText, { color: theme.primary }]}
           >
-            <ThemedText type="smallBold" style={{ color: theme.text }}>
-              {profile.name}
-            </ThemedText>
-          </Pressable>
+            ガクチカログ
+          </ThemedText>
         </View>
 
+        <Pressable
+          style={[styles.settingsButton, { backgroundColor: theme.surface }]}
+          onPress={() => router.push("/profile")}
+        >
+          <Ionicons name="settings-outline" size={28} color={theme.primary} />
+        </Pressable>
+      </View>
+
+      <View style={styles.heroSection}>
         <ThemedText
-          type="subtitle"
+          type="title"
           style={[styles.heroTitle, { color: theme.text }]}
         >
-          こんにちは、{profile.name.split(" ")[0]}さん。
-          {"\n"}今日も大学生活を記録しよう。
+          大学生活の経験を残そう。
         </ThemedText>
         <ThemedText
           type="default"
-          style={[styles.heroCopy, { color: theme.textSecondary }]}
+          style={[styles.heroSubtitle, { color: theme.textSecondary }]}
         >
-          活動を積み重ねて、ガクチカ・自己PR・面接の材料をその場で見返せる土台を作ります。
+          日々の小さな活動が、将来の大きな力になります。
         </ThemedText>
 
-        <View style={styles.ctaRow}>
-          <Pressable
-            style={[styles.primaryButton, { backgroundColor: theme.primary }]}
-            onPress={() => router.push("/activities/new")}
-          >
-            <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
-              今日の活動を記録
-            </ThemedText>
-          </Pressable>
-          <Pressable
-            style={[styles.secondaryButton, { backgroundColor: theme.surface }]}
-            onPress={() => router.push("/gakuchika")}
-          >
-            <ThemedText type="smallBold" style={{ color: theme.text }}>
-              ガクチカを見る
-            </ThemedText>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.statsGrid}>
-        <StatCard
-          label="今月の記録数"
-          value={`${countRecordsThisMonth(activities)}`}
-          helper="今月の積み上げ"
-        />
-        <StatCard
-          label="連続記録"
-          value={`${calculateStreak(activities)}`}
-          helper="日連続"
-          tone="success"
-        />
-      </View>
-
-      <SectionHeader
-        title="最近の活動"
-        subtitle="直近の記録をすぐに見返せるようにする"
-        actionLabel="一覧へ"
-        onActionPress={() => router.push("/activities")}
-      />
-      <View style={styles.cardStack}>
-        {recentActivities.map((activity) => (
-          <ActivityCard
-            key={activity.id}
-            activity={activity}
-            onPress={() => router.push(`/activities/${activity.id}`)}
-          />
-        ))}
-      </View>
-
-      <SectionHeader
-        title="ガクチカ候補"
-        subtitle="ESや面接で使いやすい経験を集約"
-        actionLabel="ガクチカ一覧"
-        onActionPress={() => router.push("/gakuchika")}
-      />
-      <View style={styles.cardStack}>
-        {featuredGakuchika.map((item) => (
-          <GakuchikaCard
-            key={item.id}
-            item={item}
-            onPress={() => router.push(`/gakuchika/${item.id}`)}
-          />
-        ))}
-      </View>
-
-      <View style={styles.bottomLinkRow}>
         <Pressable
-          style={[styles.bottomLink, { backgroundColor: theme.surface }]}
-          onPress={() => router.push("/es")}
+          style={[styles.primaryButton, { backgroundColor: "#0B7A57" }]}
+          onPress={() => router.push("/activities/new")}
         >
-          <ThemedText type="smallBold" style={{ color: theme.primary }}>
-            ES作成を開く
+          <Ionicons name="add" size={32} color="#FFFFFF" />
+          <ThemedText type="smallBold" style={styles.primaryButtonText}>
+            今日の活動を記録
           </ThemedText>
         </Pressable>
-        <Pressable
-          style={[styles.bottomLink, { backgroundColor: theme.surface }]}
-          onPress={() => router.push("/calendar")}
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText
+          type="smallBold"
+          style={[styles.sectionTitle, { color: theme.text }]}
         >
-          <ThemedText type="smallBold" style={{ color: theme.text }}>
-            カレンダーを見る
-          </ThemedText>
-        </Pressable>
+          最近の記録
+        </ThemedText>
+
+        {recentRecords.map((item, index) => (
+          <Pressable
+            key={`${item.category}-${index}`}
+            style={[styles.recordCard, { backgroundColor: theme.surface }]}
+            onPress={() => router.push("/activities")}
+          >
+            <View style={styles.recordHeader}>
+              <View
+                style={[
+                  styles.categoryBadge,
+                  { backgroundColor: theme.surfaceMuted },
+                ]}
+              >
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {item.category}
+                </ThemedText>
+              </View>
+              <Ionicons
+                name={item.icon as any}
+                size={26}
+                color={theme.textTertiary}
+              />
+            </View>
+
+            <ThemedText
+              type="subtitle"
+              style={[styles.recordTitle, { color: theme.text }]}
+            >
+              {item.title}
+            </ThemedText>
+            <ThemedText
+              type="default"
+              style={[styles.recordBody, { color: theme.textSecondary }]}
+            >
+              {item.body}
+            </ThemedText>
+          </Pressable>
+        ))}
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    gap: Spacing.four,
-    marginBottom: Spacing.six,
-  },
-  heroTopRow: {
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    marginBottom: Spacing.seven,
   },
-  profileChip: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+  brandWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+  },
+  brandText: {
+    fontSize: 18,
+    lineHeight: 26,
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroSection: {
+    marginBottom: Spacing.seven,
   },
   heroTitle: {
-    marginTop: 4,
+    fontSize: 30,
+    lineHeight: 56,
+    fontWeight: "700",
+    marginBottom: Spacing.one,
   },
-  heroCopy: {
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  ctaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
+  heroSubtitle: {
+    fontSize: 16,
+    lineHeight: 28,
+    marginBottom: Spacing.four,
   },
   primaryButton: {
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-  secondaryButton: {
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    gap: Spacing.three,
-    marginBottom: Spacing.seven,
-  },
-  cardStack: {
-    gap: Spacing.four,
-    marginBottom: Spacing.seven,
-  },
-  bottomLinkRow: {
-    flexDirection: "row",
-    gap: Spacing.three,
-    marginBottom: Spacing.six,
-  },
-  bottomLink: {
-    flex: 1,
     borderRadius: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    lineHeight: 26,
+  },
+  section: {
+    marginBottom: Spacing.seven,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    lineHeight: 28,
+    marginBottom: Spacing.three,
+  },
+  recordCard: {
+    borderRadius: 18,
+    padding: 18,
     borderWidth: 1,
     borderColor: Colors.light.border,
+    marginBottom: Spacing.three,
+    gap: 12,
+  },
+  recordHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  categoryBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  recordTitle: {
+    fontSize: 20,
+    lineHeight: 34,
+    fontWeight: "700",
+  },
+  recordBody: {
+    fontSize: 15,
+    lineHeight: 24,
   },
 });
