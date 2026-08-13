@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -40,6 +41,7 @@ const categories = [
 ];
 
 export default function SearchScreen() {
+  const router = useRouter();
   const theme = useTheme();
 
   return (
@@ -61,6 +63,7 @@ export default function SearchScreen() {
 
         <Pressable
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
+          onPress={() => router.push("/settings" as never)}
         >
           <Ionicons name="settings-outline" size={28} color={theme.primary} />
         </Pressable>
