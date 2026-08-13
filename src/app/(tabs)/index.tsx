@@ -14,8 +14,6 @@ export default function HomeScreen() {
   const activities = useAppStore((state) => state.activities);
 
   const recentActivities = activities.slice(0, 3);
-  const gakuchikaCandidates = gakuchikaRecords.slice(0, 3);
-
   const recentRecords = recentActivities.map((activity, index) => ({
     category: activity.categoryKey,
     title: activity.title,
@@ -25,11 +23,6 @@ export default function HomeScreen() {
       : index === 1
         ? "rocket"
         : "briefcase") as keyof typeof Ionicons.glyphMap,
-  }));
-
-  const gakuchikaOptions = gakuchikaCandidates.map((record, index) => ({
-    label: record.title,
-    checked: index === 0,
   }));
 
   return (
@@ -67,29 +60,6 @@ export default function HomeScreen() {
         <ThemedText
           type="default"
           style={[styles.heroSubtitle, { color: theme.textSecondary }]}
-        >
-          日々の小さな活動が、将来の大きな力になります。
-        </ThemedText>
-
-        <Pressable
-          style={[styles.primaryButton, { backgroundColor: "#0B7A57" }]}
-          onPress={() => router.push("/activities/new")}
-        >
-          <Ionicons name="add" size={32} color="#FFFFFF" />
-          <ThemedText type="smallBold" style={styles.primaryButtonText}>
-            今日の活動を記録
-          </ThemedText>
-        </Pressable>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText
-          type="smallBold"
-          style={[styles.sectionTitle, { color: theme.text }]}
-        >
-          最近の記録
-        </ThemedText>
-
         >
           日々の小さな活動が、将来の大きな力になります。
         </ThemedText>
@@ -152,40 +122,6 @@ export default function HomeScreen() {
           </Pressable>
         ))}
       </View>
-
-      <View style={styles.section}>
-        <ThemedText
-          type="smallBold"
-          style={[styles.sectionTitle, { color: theme.text }]}
-        >
-          ガクチカ候補
-        </ThemedText>
-
-        <View style={[styles.optionList, { backgroundColor: theme.surface }]}>
-          {gakuchikaOptions.map((item) => (
-            <Pressable key={item.label} style={styles.optionRow}>
-              <ThemedText type="default" style={{ color: theme.text }}>
-                {item.label}
-              </ThemedText>
-              <View
-                style={[
-                  styles.checkBox,
-                  item.checked
-                    ? { backgroundColor: "#1E9D6B", borderColor: "#1E9D6B" }
-                    : {
-                        backgroundColor: "transparent",
-                        borderColor: theme.border,
-                      },
-                ]}
-              >
-                {item.checked ? (
-                  <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                ) : null}
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
     </Screen>
   );
 }
@@ -236,17 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 28,
     marginBottom: Spacing.four,
-    gap: Spacing.four,
-    marginBottom: Spacing.seven,
-  },
-  heroTitle: {
-    fontSize: 46,
-    lineHeight: 56,
-    fontWeight: "700",
-  },
-  heroSubtitle: {
-    fontSize: 18,
-    lineHeight: 28,
   },
   primaryButton: {
     borderRadius: 20,
@@ -261,15 +186,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     lineHeight: 26,
-  },
-  section: {
-    marginBottom: Spacing.seven,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    lineHeight: 28,
-    marginBottom: Spacing.three,
-  },
   },
   section: {
     marginBottom: Spacing.seven,
@@ -299,35 +215,11 @@ const styles = StyleSheet.create({
   },
   recordTitle: {
     fontSize: 20,
-    fontSize: 26,
     lineHeight: 34,
     fontWeight: "700",
   },
   recordBody: {
     fontSize: 15,
     lineHeight: 24,
-  },
-  optionList: {
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    overflow: "hidden",
-  },
-  optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
-  },
-  checkBox: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });
