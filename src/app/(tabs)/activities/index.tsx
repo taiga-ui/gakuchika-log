@@ -6,6 +6,8 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
+import { ACTIVITY_CATEGORIES } from "@/constants/categories";
+import { Colors, Spacing } from "@/constants/theme";
 import {
   BottomTabInset,
   Colors,
@@ -138,6 +140,38 @@ export default function ActivitiesScreen() {
             >
               活動
             </ThemedText>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={[styles.searchBox, { backgroundColor: theme.surfaceMuted }]}>
+        <Ionicons name="search-outline" size={22} color={theme.textTertiary} />
+        <ThemedText type="default" style={{ color: theme.textTertiary }}>
+          {searchQuery || "活動を検索"}
+        </ThemedText>
+      </View>
+
+      <View style={styles.filterRow}>
+        {[
+          { label: "すべて", value: "all" },
+          ...ACTIVITY_CATEGORIES.map((category) => ({
+            label: category.label,
+            value: category.key,
+          })),
+        ].map((item) => (
+          <Pressable
+            key={item.value}
+            onPress={() => setSelectedCategory(item.value)}
+            style={[
+              styles.filterChip,
+              item.value === selectedCategory
+                ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                : {
+                    backgroundColor: theme.surfaceMuted,
+                    borderColor: Colors.light.border,
+                  },
+            ]}
+          >
             <ThemedText
               type="default"
               style={[styles.subtitle, { color: theme.textSecondary }]}
