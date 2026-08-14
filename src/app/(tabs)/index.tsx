@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
         <Pressable
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
-          onPress={() => router.push("/profile")}
+          onPress={() => router.push("/settings" as never)}
         >
           <Ionicons name="settings-outline" size={28} color={theme.primary} />
         </Pressable>
