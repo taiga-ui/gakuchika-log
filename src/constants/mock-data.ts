@@ -29,6 +29,34 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     updatedAt: "2026-07-26T09:00:00.000Z",
   },
   {
+    id: "activity-007",
+    title: "商社インターンで営業資料の改善提案を実施",
+    body: "提案資料の見せ方を整理し、相手の理解が進みやすい構成に改善した。",
+    categoryKey: "internship",
+    tagIds: ["presentation", "analysis", "improvement"],
+    date: "2026-07-10",
+    photoAsset: require("../../assets/images/react-logo.png"),
+    photoLabel: "営業提案の構成メモ",
+    metrics: ["資料の理解時間 -20%", "質問件数 -3件"],
+    location: "商社インターン",
+    createdAt: "2026-07-10T10:00:00.000Z",
+    updatedAt: "2026-07-10T10:00:00.000Z",
+  },
+  {
+    id: "activity-008",
+    title: "AIイベントでプロトタイプを発表した",
+    body: "学生向けの体験型コンテンツを題材に、プロトタイプと改善ポイントを発表した。",
+    categoryKey: "competition",
+    tagIds: ["presentation", "innovation", "teamwork"],
+    date: "2026-07-08",
+    photoAsset: require("../../assets/images/logo-glow.png"),
+    photoLabel: "発表時のデモ画面",
+    metrics: ["入賞 1位", "デモ完走 100%"],
+    location: "学内ハッカソン",
+    createdAt: "2026-07-08T09:30:00.000Z",
+    updatedAt: "2026-07-08T09:30:00.000Z",
+  },
+  {
     id: "activity-002",
     title: "React学習会でUI改善を発表",
     body: "アクセシビリティを意識したコンポーネント分割を紹介し、画面設計の意図を説明した。",
@@ -95,6 +123,14 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     updatedAt: "2026-07-11T11:00:00.000Z",
   },
 ];
+
+export const CATEGORY_COUNT_MAP = MOCK_ACTIVITIES.reduce(
+  (acc, activity) => {
+    acc[activity.categoryKey] = (acc[activity.categoryKey] ?? 0) + 1;
+    return acc;
+  },
+  {} as Record<string, number>,
+);
 
 export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   {

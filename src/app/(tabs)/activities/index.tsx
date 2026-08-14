@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
+import { ACTIVITY_CATEGORIES } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -71,9 +72,10 @@ export default function ActivitiesScreen() {
       <View style={styles.filterRow}>
         {[
           { label: "すべて", value: "all" },
-          { label: "サークル", value: "club" },
-          { label: "アルバイト", value: "part-time" },
-          { label: "学業", value: "study" },
+          ...ACTIVITY_CATEGORIES.map((category) => ({
+            label: category.label,
+            value: category.key,
+          })),
         ].map((item) => (
           <Pressable
             key={item.value}
