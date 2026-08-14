@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -10,6 +11,7 @@ import { useAppStore } from "@/store/use-app-store";
 const tabs = ["一覧", "進行中"];
 
 export default function GakuchikaScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const gakuchikaData = useAppStore((state) => state.gakuchikaRecords).map(
     (record, index) => ({
@@ -45,6 +47,7 @@ export default function GakuchikaScreen() {
 
         <Pressable
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
+          onPress={() => router.push("/settings" as never)}
         >
           <Ionicons name="settings-outline" size={28} color={theme.primary} />
         </Pressable>

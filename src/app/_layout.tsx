@@ -18,6 +18,12 @@ export default function RootLayout() {
           <Stack.Screen name="gakuchika/index" />
           <Stack.Screen name="gakuchika/[id]" />
           <Stack.Screen name="es/index" />
+          <Stack.Screen name="settings/index" />
+          <Stack.Screen name="settings/profile" />
+          <Stack.Screen name="settings/notifications" />
+          <Stack.Screen name="settings/export" />
+          <Stack.Screen name="settings/help" />
+          <Stack.Screen name="settings/about" />
         </Stack>
       </GestureHandlerRootView>
     </SafeAreaProvider>

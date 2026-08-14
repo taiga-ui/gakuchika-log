@@ -25,6 +25,7 @@ type AppState = {
   selectedCategory: string;
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string) => void;
+  updateProfile: (patch: Partial<ProfileSummary>) => void;
   addActivity: (draft: ActivityDraft) => ActivityRecord;
   updateActivity: (id: string, patch: Partial<ActivityRecord>) => void;
   addEsDraft: (draft: Omit<EsDraft, "id" | "updatedAt">) => EsDraft;
@@ -43,6 +44,13 @@ export const useAppStore = create<AppState>((set) => ({
   selectedCategory: "all",
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedCategory: (category) => set({ selectedCategory: category }),
+  updateProfile: (patch) =>
+    set((state) => ({
+      profile: {
+        ...state.profile,
+        ...patch,
+      },
+    })),
   addActivity: (draft) => {
     const now = new Date();
     const record: ActivityRecord = {
