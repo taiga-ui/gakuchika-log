@@ -138,12 +138,6 @@ export default function ActivitiesScreen() {
             >
               活動
             </ThemedText>
-            <ThemedText
-              type="default"
-              style={[styles.subtitle, { color: theme.textSecondary }]}
-            >
-              記録を振り返りましょう
-            </ThemedText>
 
             <View
               style={[styles.segment, { backgroundColor: theme.surfaceMuted }]}
