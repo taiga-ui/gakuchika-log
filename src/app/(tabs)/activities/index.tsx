@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -250,16 +249,6 @@ export default function ActivitiesScreen() {
                             { backgroundColor: theme.surface },
                           ]}
                         >
-                          {activity.photoAsset ? (
-                            <Image
-                              source={activity.photoAsset as number}
-                              style={styles.featureImage}
-                              contentFit="cover"
-                            />
-                          ) : (
-                            <View style={styles.featureImage} />
-                          )}
-
                           <View style={styles.featureContent}>
                             <View
                               style={[
@@ -661,10 +650,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.light.border,
     overflow: "hidden",
-  },
-  featureImage: {
-    height: 200,
-    backgroundColor: "#d9e0df",
   },
   featureContent: {
     paddingHorizontal: 14,

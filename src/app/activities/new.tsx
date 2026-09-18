@@ -1,15 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
-import { PhotoHeader } from "@/components/ui/photo-header";
 import { Screen } from "@/components/ui/screen";
 import { TagChip } from "@/components/ui/tag-chip";
-import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
-import { PHOTO_PRESETS } from "@/constants/photo-presets";
+import { ACTIVITY_CATEGORIES } from "@/constants/categories";
 import { TAGS } from "@/constants/tags";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -30,17 +28,6 @@ export default function NewActivityScreen() {
   const [tagIds, setTagIds] = useState<Array<(typeof TAGS)[number]["id"]>>([
     "analysis",
   ]);
-  const [photoPresetKey, setPhotoPresetKey] =
-    useState<(typeof PHOTO_PRESETS)[number]["key"]>("none");
-
-  const selectedPhotoPreset = useMemo(
-    () =>
-      PHOTO_PRESETS.find((preset) => preset.key === photoPresetKey) ??
-      PHOTO_PRESETS[0],
-    [photoPresetKey],
-  );
-
-  const selectedCategory = CATEGORY_MAP[categoryKey];
 
   const handleSave = () => {
     const created = addActivity({
@@ -50,8 +37,6 @@ export default function NewActivityScreen() {
       location: location.trim() || undefined,
       categoryKey,
       tagIds: tagIds.length ? tagIds : ["analysis"],
-      photoAsset: selectedPhotoPreset.source ?? null,
-      photoLabel: selectedPhotoPreset.label,
     });
 
     router.replace(`/activities/${created.id}`);
@@ -67,7 +52,7 @@ export default function NewActivityScreen() {
 
   return (
     <Screen>
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { marginTop: Spacing.two }]}>
         <Pressable
           style={[styles.backButton, { backgroundColor: theme.surface }]}
           onPress={() => router.back()}
@@ -77,9 +62,6 @@ export default function NewActivityScreen() {
         <View style={{ flex: 1 }}>
           <ThemedText type="smallBold" style={{ color: theme.primary }}>
             新規記録
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            必須入力を少なくして、すぐ残せるようにする
           </ThemedText>
         </View>
         <Pressable
@@ -91,14 +73,6 @@ export default function NewActivityScreen() {
           </ThemedText>
         </Pressable>
       </View>
-
-      <PhotoHeader
-        photoAsset={selectedPhotoPreset.source ?? null}
-        photoLabel={selectedPhotoPreset.label}
-        categoryKey={categoryKey}
-        title={title || "タイトル未設定"}
-        subtitle={body || "ここに記録内容を入力"}
-      />
 
       <View style={styles.section}>
         <FormField
@@ -165,83 +139,6 @@ export default function NewActivityScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          写真・成果物
-        </ThemedText>
-        <View style={styles.photoPresetRow}>
-          {PHOTO_PRESETS.map((preset) => (
-            <Pressable
-              key={preset.key}
-              style={[
-                styles.photoPreset,
-                {
-                  backgroundColor: theme.surface,
-                  borderColor:
-                    photoPresetKey === preset.key
-                      ? theme.primary
-                      : Colors.light.border,
-                },
-              ]}
-              onPress={() => setPhotoPresetKey(preset.key)}
-            >
-              <View
-                style={[
-                  styles.photoPreview,
-                  { backgroundColor: theme.surfaceMuted },
-                ]}
-              >
-                {preset.source ? (
-                  <View
-                    style={[
-                      styles.previewImage,
-                      { backgroundColor: theme.surfaceMuted },
-                    ]}
-                  />
-                ) : (
-                  <Ionicons
-                    name="image-outline"
-                    size={22}
-                    color={theme.textSecondary}
-                  />
-                )}
-              </View>
-              <ThemedText type="smallBold" style={{ color: theme.text }}>
-                {preset.label}
-              </ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {preset.description}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          今の記録の見え方
-        </ThemedText>
-        <View
-          style={[
-            styles.previewBox,
-            {
-              backgroundColor: selectedCategory.softColor,
-              borderColor: selectedCategory.borderColor,
-            },
-          ]}
-        >
-          <ThemedText
-            type="smallBold"
-            style={{ color: selectedCategory.color }}
-          >
-            {selectedCategory.label}
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            写真がない場合でも、カテゴリ色とアイコンで見分けられる設計。
-          </ThemedText>
-        </View>
-      </View>
-
       <Pressable
         style={[styles.fullButton, { backgroundColor: theme.primary }]}
         onPress={handleSave}
@@ -282,33 +179,6 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-  },
-  photoPresetRow: {
-    gap: 12,
-  },
-  photoPreset: {
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: Spacing.four,
-    gap: 8,
-  },
-  photoPreview: {
-    width: "100%",
-    height: 100,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  previewImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 18,
-  },
-  previewBox: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: Spacing.four,
     gap: 8,
   },
   fullButton: {
