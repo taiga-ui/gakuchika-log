@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
@@ -18,7 +17,6 @@ import { useAppStore } from "@/store/use-app-store";
 export default function SearchScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const router = useRouter();
   const inputRef = useRef<TextInput>(null);
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
