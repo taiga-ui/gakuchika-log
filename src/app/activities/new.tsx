@@ -30,9 +30,11 @@ export default function NewActivityScreen() {
   ]);
 
   const handleSave = () => {
+    if (!title.trim() || !body.trim()) return;
+
     const created = addActivity({
-      title: title.trim() || "新しい活動",
-      body: body.trim() || "記録を追加して、あとで振り返れるようにする。",
+      title: title.trim(),
+      body: body.trim(),
       date,
       location: location.trim() || undefined,
       categoryKey,
@@ -67,6 +69,7 @@ export default function NewActivityScreen() {
         <Pressable
           style={[styles.saveButton, { backgroundColor: theme.primary }]}
           onPress={handleSave}
+          disabled={!title.trim() || !body.trim()}
         >
           <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
             保存
@@ -140,8 +143,15 @@ export default function NewActivityScreen() {
       </View>
 
       <Pressable
-        style={[styles.fullButton, { backgroundColor: theme.primary }]}
+        style={[
+          styles.fullButton,
+          {
+            backgroundColor:
+              title.trim() && body.trim() ? theme.primary : theme.textTertiary,
+          },
+        ]}
         onPress={handleSave}
+        disabled={!title.trim() || !body.trim()}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           この内容で保存する

@@ -36,6 +36,22 @@ export type GakuchikaRecord = {
   numbers: string[];
   artifact: string;
   relatedActivityIds: string[];
+  reflection?: Partial<{
+    activity: string;
+    challenge: string;
+    difficulty: string;
+    action: string;
+    role: string;
+    result: string;
+    learning: string;
+  }>;
+  es?: {
+    company: string;
+    question: string;
+    maxCharacters: number;
+    content: string;
+  };
+  savedAt?: ISODateString;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 };

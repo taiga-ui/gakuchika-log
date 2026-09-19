@@ -28,6 +28,12 @@ type AppState = {
   updateProfile: (patch: Partial<ProfileSummary>) => void;
   addActivity: (draft: ActivityDraft) => ActivityRecord;
   updateActivity: (id: string, patch: Partial<ActivityRecord>) => void;
+  addGakuchika: (activityIds: string[], title?: string) => GakuchikaRecord;
+  updateGakuchika: (
+    id: string,
+    patch: Partial<Omit<GakuchikaRecord, "id">>,
+  ) => void;
+  saveGakuchika: (id: string) => void;
   addEsDraft: (draft: Omit<EsDraft, "id" | "updatedAt">) => EsDraft;
   updateEsDraft: (id: string, patch: Partial<Omit<EsDraft, "id">>) => void;
 };
@@ -75,6 +81,44 @@ export const useAppStore = create<AppState>((set) => ({
               updatedAt: new Date().toISOString(),
             }
           : activity,
+      ),
+    })),
+  addGakuchika: (activityIds, title) => {
+    const now = new Date().toISOString();
+    const record: GakuchikaRecord = {
+      id: createId("gakuchika"),
+      title: title?.trim() || "無題のガクチカ",
+      overview: "",
+      period: "",
+      role: "",
+      challenge: "",
+      difficulty: "",
+      action: "",
+      result: "",
+      learning: "",
+      numbers: [],
+      artifact: "",
+      relatedActivityIds: activityIds,
+      createdAt: now,
+      updatedAt: now,
+    };
+    set((state) => ({ gakuchikaRecords: [record, ...state.gakuchikaRecords] }));
+    return record;
+  },
+  updateGakuchika: (id, patch) =>
+    set((state) => ({
+      gakuchikaRecords: state.gakuchikaRecords.map((record) =>
+        record.id === id
+          ? { ...record, ...patch, updatedAt: new Date().toISOString() }
+          : record,
+      ),
+    })),
+  saveGakuchika: (id) =>
+    set((state) => ({
+      gakuchikaRecords: state.gakuchikaRecords.map((record) =>
+        record.id === id
+          ? { ...record, savedAt: new Date().toISOString() }
+          : record,
       ),
     })),
   addEsDraft: (draft) => {

@@ -1,31 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import { Colors, Spacing } from "@/constants/theme";
+import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
-
-const tabs = ["一覧", "進行中"];
 
 export default function GakuchikaScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const gakuchikaData = useAppStore((state) => state.gakuchikaRecords).map(
-    (record, index) => ({
-      title: record.title,
-      category: index === 0 ? "学業" : index === 1 ? "研究" : "実務",
-      accent: index === 0 ? "#DDEBFF" : index === 1 ? "#E6F7EF" : "#FEEAD5",
-      actionIcon: "chevron-forward" as keyof typeof Ionicons.glyphMap,
-      description: record.overview,
-      related: record.relatedActivityIds.length,
-      status: index === 0 ? "準備中" : index === 1 ? "進行中" : "完了",
-      statusColor:
-        index === 0 ? "#D97706" : index === 1 ? "#2457D6" : "#2BA46A",
-      progress: 35 + index * 30,
-    }),
+  const records = useAppStore((state) => state.gakuchikaRecords);
+  const [activeList, setActiveList] = useState<"draft" | "saved">("draft");
+  const visibleRecords = records.filter((record) =>
+    activeList === "saved" ? Boolean(record.savedAt) : !record.savedAt,
   );
 
   return (
@@ -39,12 +29,11 @@ export default function GakuchikaScreen() {
           </View>
           <ThemedText
             type="smallBold"
-            style={[styles.brandText, { color: theme.primary }]}
+            style={[styles.brand, { color: theme.primary }]}
           >
             ガクチカログ
           </ThemedText>
         </View>
-
         <Pressable
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
           onPress={() => router.push("/settings" as never)}
@@ -52,151 +41,107 @@ export default function GakuchikaScreen() {
           <Ionicons name="settings-outline" size={28} color={theme.primary} />
         </Pressable>
       </View>
-
-      <ThemedText
-        type="title"
-        style={[styles.pageTitle, { color: theme.text }]}
-      >
+      <ThemedText type="title" style={[styles.title, { color: theme.text }]}>
         ガクチカ
       </ThemedText>
-
-      <ThemedText
-        type="default"
-        style={[styles.subtitle, { color: theme.textSecondary }]}
-      >
-        これまでの経験を整理し、ESの準備を進めましょう
+      <ThemedText style={[styles.description, { color: theme.textSecondary }]}>
+        これまでの経験から、就活で使いたい経験を整理できます。
       </ThemedText>
-
+      <Pressable
+        style={[styles.addButton, { backgroundColor: theme.primary }]}
+        onPress={() => router.push("/gakuchika/new" as never)}
+      >
+        <Ionicons name="add" size={25} color="#FFFFFF" />
+        <ThemedText style={styles.buttonText}>ガクチカを追加</ThemedText>
+      </Pressable>
       <View style={[styles.segment, { backgroundColor: theme.surfaceMuted }]}>
-        {tabs.map((tab, index) => (
+        {(
+          [
+            ["draft", "作成中"],
+            ["saved", "保存済み"],
+          ] as const
+        ).map(([value, label]) => (
           <Pressable
-            key={tab}
+            key={value}
+            onPress={() => setActiveList(value)}
             style={[
               styles.segmentButton,
-              index === 0 && {
-                backgroundColor: theme.primary,
-                borderColor: theme.primary,
+              activeList === value && {
+                backgroundColor: theme.surface,
+                borderColor: Colors.light.border,
               },
             ]}
           >
             <ThemedText
               type="smallBold"
               style={{
-                color: index === 0 ? "#FFFFFF" : theme.textSecondary,
+                color: activeList === value ? theme.text : theme.textSecondary,
               }}
             >
-              {tab}
+              {label}（
+              {
+                records.filter((record) =>
+                  value === "saved" ? Boolean(record.savedAt) : !record.savedAt,
+                ).length
+              }
+              ）
             </ThemedText>
           </Pressable>
         ))}
       </View>
-
       <View style={styles.list}>
-        {gakuchikaData.map((item) => (
-          <Pressable
-            key={item.title}
-            style={[styles.card, { backgroundColor: theme.surface }]}
-          >
-            <View style={styles.cardHeader}>
-              <View
-                style={[styles.categoryPill, { backgroundColor: item.accent }]}
+        {visibleRecords.length === 0 ? (
+          <View style={[styles.emptyState, { backgroundColor: theme.surface }]}>
+            <ThemedText style={[styles.emptyTitle, { color: theme.text }]}>
+              {activeList === "saved"
+                ? "保存済みのガクチカはありません"
+                : "作成中のガクチカはありません"}
+            </ThemedText>
+            <ThemedText style={{ color: theme.textSecondary }}>
+              {activeList === "saved"
+                ? "ESを書き終えたら、保存してここから見返せます。"
+                : "活動記録からガクチカを追加して整理を始めましょう。"}
+            </ThemedText>
+          </View>
+        ) : (
+          visibleRecords.map((record) => (
+            <View
+              key={record.id}
+              style={[styles.card, { backgroundColor: theme.surface }]}
+            >
+              <ThemedText
+                type="subtitle"
+                style={[styles.cardTitle, { color: theme.text }]}
               >
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {item.category}
+                {record.title}
+              </ThemedText>
+              <View
+                style={[
+                  styles.relatedPill,
+                  { backgroundColor: theme.primarySoft },
+                ]}
+              >
+                <ThemedText style={{ color: theme.textSecondary }}>
+                  関連記録：{record.relatedActivityIds.length}件
                 </ThemedText>
               </View>
-
-              <Pressable style={styles.arrowButton}>
-                <Ionicons
-                  name={item.actionIcon as keyof typeof Ionicons.glyphMap}
-                  size={22}
-                  color={theme.textTertiary}
-                />
+              <View style={styles.divider} />
+              <Pressable
+                style={[
+                  styles.writeButton,
+                  { backgroundColor: Colors.light.success },
+                ]}
+                onPress={() => router.push(`/gakuchika/${record.id}` as never)}
+              >
+                <ThemedText style={styles.buttonText}>
+                  {record.savedAt ? "保存済みを開く" : "このガクチカを書く"}
+                </ThemedText>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
               </Pressable>
             </View>
-
-            <ThemedText
-              type="subtitle"
-              style={[styles.cardTitle, { color: theme.text }]}
-            >
-              {item.title}
-            </ThemedText>
-
-            <ThemedText
-              type="default"
-              style={[styles.cardDescription, { color: theme.textSecondary }]}
-            >
-              {item.description}
-            </ThemedText>
-
-            <View style={styles.summaryRow}>
-              <View
-                style={[
-                  styles.summaryBox,
-                  { backgroundColor: theme.surfaceMuted },
-                ]}
-              >
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  関連記録数
-                </ThemedText>
-                <ThemedText type="subtitle" style={{ color: theme.text }}>
-                  {item.related}件
-                </ThemedText>
-              </View>
-
-              <View
-                style={[
-                  styles.summaryBox,
-                  { backgroundColor: theme.surfaceMuted },
-                ]}
-              >
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  ES作成状況
-                </ThemedText>
-                <ThemedText
-                  type="subtitle"
-                  style={{
-                    color: item.statusColor,
-                  }}
-                >
-                  {item.status}
-                </ThemedText>
-              </View>
-            </View>
-
-            <View style={styles.progressRow}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                活動進捗
-              </ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {item.progress}%
-              </ThemedText>
-            </View>
-
-            <View
-              style={[
-                styles.progressBar,
-                { backgroundColor: theme.surfaceMuted },
-              ]}
-            >
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${item.progress}%`,
-                    backgroundColor:
-                      item.progress === 100 ? "#1BAF67" : "#0B7A57",
-                  },
-                ]}
-              />
-            </View>
-          </Pressable>
-        ))}
+          ))
+        )}
       </View>
-
-      <Pressable style={[styles.fab, { backgroundColor: "#0B7A57" }]}>
-        <Ionicons name="add" size={32} color="#FFFFFF" />
-      </Pressable>
     </Screen>
   );
 }
@@ -206,13 +151,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.five,
+    marginBottom: 32,
   },
-  brandWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  brandWrap: { flexDirection: "row", alignItems: "center", gap: 10 },
   avatar: {
     width: 42,
     height: 42,
@@ -223,10 +164,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.08)",
   },
-  brandText: {
-    fontSize: 18,
-    lineHeight: 26,
-  },
+  brand: { fontSize: 18, lineHeight: 26 },
   settingsButton: {
     width: 40,
     height: 40,
@@ -234,108 +172,75 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  pageTitle: {
-    fontSize: 42,
-    lineHeight: 52,
-    fontWeight: "700",
-  },
-  subtitle: {
-    fontSize: 18,
-    lineHeight: 28,
-    marginTop: 6,
-    marginBottom: Spacing.four,
+  title: { fontSize: 38, lineHeight: 48, fontWeight: "700" },
+  description: { fontSize: 18, lineHeight: 29, marginTop: 8, maxWidth: 650 },
+  addButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 30,
+    paddingHorizontal: 28,
+    paddingVertical: 15,
+    marginTop: 28,
+    marginBottom: 58,
   },
   segment: {
     flexDirection: "row",
-    borderRadius: 18,
+    borderRadius: 14,
     padding: 4,
-    gap: 4,
-    marginBottom: Spacing.four,
+    marginBottom: 24,
   },
   segmentButton: {
     flex: 1,
-    borderRadius: 14,
-    paddingVertical: 12,
     alignItems: "center",
-    justifyContent: "center",
     borderWidth: 1,
     borderColor: "transparent",
+    borderRadius: 11,
+    paddingVertical: 11,
   },
-  list: {
-    gap: Spacing.three,
-    paddingBottom: 88,
-  },
-  card: {
-    borderRadius: 20,
+  buttonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700" },
+  list: { gap: 32, paddingBottom: 32 },
+  emptyState: {
+    borderRadius: 16,
+    padding: 24,
+    gap: 8,
     borderWidth: 1,
     borderColor: Colors.light.border,
-    padding: 18,
-    gap: 14,
   },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  emptyTitle: { fontSize: 18, fontWeight: "700" },
+  card: {
+    borderRadius: 20,
+    padding: 30,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    shadowColor: "#AEB4C4",
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
   },
-  categoryPill: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
+  cardTitle: { fontSize: 27, lineHeight: 36, fontWeight: "700" },
+  relatedPill: {
+    alignSelf: "flex-start",
+    borderRadius: 10,
+    paddingHorizontal: 14,
     paddingVertical: 8,
+    marginTop: 26,
   },
-  arrowButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.light.surfaceMuted,
+  divider: {
+    height: 1,
+    backgroundColor: Colors.light.border,
+    marginTop: 28,
+    marginBottom: 16,
   },
-  cardTitle: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: "700",
-  },
-  cardDescription: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  summaryBox: {
-    flex: 1,
-    borderRadius: 14,
-    padding: 12,
-    gap: 6,
-  },
-  progressRow: {
+  writeButton: {
+    alignSelf: "flex-end",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  progressBar: {
-    height: 10,
-    borderRadius: 999,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 999,
-  },
-  fab: {
-    position: "absolute",
-    right: 16,
-    bottom: 24,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    gap: 10,
+    borderRadius: 30,
+    paddingHorizontal: 25,
+    paddingVertical: 14,
   },
 });

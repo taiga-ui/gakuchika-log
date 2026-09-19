@@ -1,51 +1,90 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PhotoHeader } from "@/components/ui/photo-header";
 import { Screen } from "@/components/ui/screen";
-import { CATEGORY_MAP } from "@/constants/categories";
-import { Colors, Spacing } from "@/constants/theme";
-import { ActivityCard } from "@/features/activities/components/activity-card";
+import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
 
-type DetailRowProps = {
+type ReflectionKey =
+  | "activity"
+  | "challenge"
+  | "difficulty"
+  | "action"
+  | "role"
+  | "result"
+  | "learning";
+const reflectionFields: Array<{
+  key: ReflectionKey;
   label: string;
-  value: string;
-};
-
-function DetailRow({ label, value }: DetailRowProps) {
-  const theme = useTheme();
-
-  return (
-    <View style={styles.detailRow}>
-      <ThemedText type="smallBold" style={{ color: theme.text }}>
-        {label}
-      </ThemedText>
-      <ThemedText
-        type="small"
-        style={{ color: theme.textSecondary, flex: 1, textAlign: "right" }}
-      >
-        {value}
-      </ThemedText>
-    </View>
-  );
-}
-
+  placeholder: string;
+}> = [
+  {
+    key: "activity",
+    label: "活動：何をした？",
+    placeholder: "活動の内容を具体的に書きましょう",
+  },
+  {
+    key: "challenge",
+    label: "課題：どんな課題があった？",
+    placeholder: "当時の状況や課題を書きましょう",
+  },
+  {
+    key: "difficulty",
+    label: "困難：何に苦労した？",
+    placeholder: "難しかったこと、乗り越えたことを書きましょう",
+  },
+  {
+    key: "action",
+    label: "工夫：どう考えて行動した？",
+    placeholder: "考えたことと実際の工夫を書きましょう",
+  },
+  {
+    key: "role",
+    label: "自分の役割：チームの中で何をした？",
+    placeholder: "自分が担った役割を書きましょう",
+  },
+  {
+    key: "result",
+    label: "結果・変化：何が変わった？",
+    placeholder: "成果や周囲の変化を書きましょう",
+  },
+  {
+    key: "learning",
+    label: "学び：何を学んだ？",
+    placeholder: "この経験から得た学びを書きましょう",
+  },
+];
 export default function GakuchikaDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const params = useLocalSearchParams<{ id?: string }>();
-  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const record = useAppStore((state) =>
+    state.gakuchikaRecords.find((item) => item.id === id),
+  );
   const activities = useAppStore((state) => state.activities);
+  const updateGakuchika = useAppStore((state) => state.updateGakuchika);
+  const saveGakuchika = useAppStore((state) => state.saveGakuchika);
+  const [reflection, setReflection] = useState(record?.reflection || {});
+  const [company, setCompany] = useState(record?.es?.company || "");
+  const [question, setQuestion] = useState(record?.es?.question || "");
+  const [maxCharacters, setMaxCharacters] = useState(
+    String(record?.es?.maxCharacters || 400),
+  );
+  const [content, setContent] = useState(record?.es?.content || "");
 
-  const gakuchikaId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const item = gakuchikaRecords.find((record) => record.id === gakuchikaId);
-
-  if (!item) {
+  if (!record)
     return (
       <Screen>
         <EmptyState
@@ -57,161 +96,286 @@ export default function GakuchikaDetailScreen() {
         />
       </Screen>
     );
-  }
 
-  const relatedActivities = activities.filter((activity) =>
-    item.relatedActivityIds.includes(activity.id),
-  );
-  const coverActivity = relatedActivities[0];
-  const categoryKey = coverActivity?.categoryKey ?? "research";
-  const category = CATEGORY_MAP[categoryKey];
+  const saveReflection = (key: ReflectionKey, value: string) => {
+    const nextReflection = { ...reflection, [key]: value };
+    setReflection(nextReflection);
+    updateGakuchika(record.id, { reflection: nextReflection });
+  };
+  const saveEs = (patch: Partial<NonNullable<typeof record.es>>) => {
+    const next = {
+      company,
+      question,
+      maxCharacters: Number(maxCharacters) || 400,
+      content,
+      ...patch,
+    };
+    setCompany(next.company);
+    setQuestion(next.question);
+    setMaxCharacters(String(next.maxCharacters));
+    setContent(next.content);
+    updateGakuchika(record.id, { es: next });
+  };
+  const count = [...content].length;
+  const handleSave = () => {
+    updateGakuchika(record.id, {
+      reflection,
+      es: {
+        company,
+        question,
+        maxCharacters: Number(maxCharacters) || 400,
+        content,
+      },
+    });
+    saveGakuchika(record.id);
+  };
 
   return (
-    <Screen>
-      <View style={styles.headerRow}>
-        <Pressable
-          style={[styles.backButton, { backgroundColor: theme.surface }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={20} color={theme.text} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <ThemedText type="smallBold" style={{ color: theme.primary }}>
-            ガクチカ詳細
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            ESや面接に転用しやすい形で整理する
-          </ThemedText>
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingView}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+    >
+      <Screen>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color={theme.text} />
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            <ThemedText style={[styles.headerTitle, { color: theme.primary }]}>
+              Gakuchika Log
+            </ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              経験を深掘りして、自分の言葉にする
+            </ThemedText>
+          </View>
         </View>
-      </View>
-
-      <PhotoHeader
-        photoAsset={coverActivity?.photoAsset}
-        photoLabel={coverActivity?.photoLabel}
-        categoryKey={categoryKey}
-        title={item.title}
-        subtitle={item.overview}
-      />
-
-      <View style={[styles.sectionCard, { backgroundColor: theme.surface }]}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          基本情報
+        <ThemedText type="title" style={[styles.title, { color: theme.text }]}>
+          {record.title}
         </ThemedText>
-        <DetailRow label="活動概要" value={item.overview} />
-        <DetailRow label="活動期間" value={item.period} />
-        <DetailRow label="役割" value={item.role} />
-        <DetailRow label="カテゴリ" value={category.label} />
-      </View>
+        <View style={[styles.related, { backgroundColor: theme.surface }]}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
+            関連する活動記録（{record.relatedActivityIds.length}件）
+          </ThemedText>
+          {activities
+            .filter((activity) =>
+              record.relatedActivityIds.includes(activity.id),
+            )
+            .map((activity) => (
+              <View key={activity.id} style={styles.relatedActivity}>
+                <ThemedText
+                  style={[styles.relatedActivityTitle, { color: theme.text }]}
+                >
+                  {activity.title}
+                </ThemedText>
+                <ThemedText style={{ color: theme.textSecondary }}>
+                  {activity.body}
+                </ThemedText>
+              </View>
+            ))}
+        </View>
 
-      <View style={[styles.sectionCard, { backgroundColor: theme.surface }]}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          STARの材料
+        <ThemedText style={[styles.sectionHeading, { color: theme.text }]}>
+          この経験について整理する
         </ThemedText>
-        <DetailRow label="課題" value={item.challenge} />
-        <DetailRow label="困難" value={item.difficulty} />
-        <DetailRow label="工夫" value={item.action} />
-        <DetailRow label="結果" value={item.result} />
-        <DetailRow label="学び" value={item.learning} />
-      </View>
-
-      <View style={[styles.sectionCard, { backgroundColor: theme.surface }]}>
-        <ThemedText type="smallBold" style={{ color: theme.text }}>
-          数字・成果物
-        </ThemedText>
-        <View style={styles.metricRow}>
-          {item.numbers.map((metric) => (
+        <View style={styles.fields}>
+          {reflectionFields.map((field) => (
             <View
-              key={metric}
-              style={[
-                styles.metricPill,
-                { backgroundColor: theme.primarySoft },
-              ]}
+              key={field.key}
+              style={[styles.fieldCard, { backgroundColor: theme.surface }]}
             >
-              <ThemedText type="smallBold" style={{ color: theme.primary }}>
-                {metric}
+              <ThemedText style={[styles.label, { color: theme.text }]}>
+                {field.label}
               </ThemedText>
+              <TextInput
+                multiline
+                value={reflection[field.key] || ""}
+                onChangeText={(value) =>
+                  setReflection((current) => ({
+                    ...current,
+                    [field.key]: value,
+                  }))
+                }
+                onBlur={() =>
+                  saveReflection(field.key, reflection[field.key] || "")
+                }
+                placeholder={field.placeholder}
+                placeholderTextColor={theme.textTertiary}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.surfaceMuted, color: theme.text },
+                ]}
+              />
             </View>
           ))}
         </View>
-        <ThemedText
-          type="small"
-          style={{ color: theme.textSecondary, lineHeight: 22 }}
-        >
-          {item.artifact}
-        </ThemedText>
-      </View>
 
-      <View style={styles.relatedSection}>
-        <ThemedText
-          type="smallBold"
-          style={{ color: theme.text, marginBottom: Spacing.two }}
-        >
-          関連する活動
+        <ThemedText style={[styles.sectionHeading, { color: theme.text }]}>
+          ESを書く
         </ThemedText>
-        <View style={styles.relatedList}>
-          {relatedActivities.length ? (
-            relatedActivities.map((activity) => (
-              <ActivityCard
-                key={activity.id}
-                activity={activity}
-                onPress={() => router.push(`/activities/${activity.id}`)}
-              />
-            ))
-          ) : (
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              関連する活動はまだありません。
+        <View style={[styles.esCard, { backgroundColor: theme.surface }]}>
+          <ThemedText style={[styles.helper, { color: theme.textSecondary }]}>
+            整理した経験を見ながら、自分の文章を書きましょう。
+          </ThemedText>
+          <ThemedText style={[styles.label, { color: theme.text }]}>
+            企業名（任意）
+          </ThemedText>
+          <TextInput
+            value={company}
+            onChangeText={setCompany}
+            onBlur={() => saveEs({ company })}
+            placeholder="例：株式会社○○"
+            placeholderTextColor={theme.textTertiary}
+            style={[
+              styles.singleInput,
+              { color: theme.text, borderColor: Colors.light.border },
+            ]}
+          />
+          <ThemedText style={[styles.label, { color: theme.text }]}>
+            質問（任意）
+          </ThemedText>
+          <TextInput
+            value={question}
+            onChangeText={setQuestion}
+            onBlur={() => saveEs({ question })}
+            placeholder="例：学生時代に最も打ち込んだこと"
+            placeholderTextColor={theme.textTertiary}
+            style={[
+              styles.singleInput,
+              { color: theme.text, borderColor: Colors.light.border },
+            ]}
+          />
+          <View style={styles.countRow}>
+            <ThemedText style={[styles.label, { color: theme.text }]}>
+              ES本文
             </ThemedText>
-          )}
+            <TextInput
+              value={maxCharacters}
+              onChangeText={setMaxCharacters}
+              onBlur={() =>
+                saveEs({ maxCharacters: Number(maxCharacters) || 400 })
+              }
+              keyboardType="number-pad"
+              style={[
+                styles.limitInput,
+                { color: theme.text, borderColor: Colors.light.border },
+              ]}
+            />
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {count} / {maxCharacters || 400}文字
+            </ThemedText>
+          </View>
+          <TextInput
+            multiline
+            value={content}
+            onChangeText={setContent}
+            onBlur={() => saveEs({ content })}
+            placeholder="整理した経験をもとに、ES本文を書いてみましょう。"
+            placeholderTextColor={theme.textTertiary}
+            style={[
+              styles.esInput,
+              { color: theme.text, borderColor: Colors.light.border },
+            ]}
+          />
         </View>
-      </View>
-    </Screen>
+        <Pressable
+          onPress={handleSave}
+          style={[styles.saveButton, { backgroundColor: theme.primary }]}
+        >
+          <Ionicons
+            name={record.savedAt ? "checkmark-circle-outline" : "save-outline"}
+            size={22}
+            color="#FFFFFF"
+          />
+          <ThemedText style={styles.saveButtonText}>
+            {record.savedAt ? "変更を保存" : "このガクチカを保存"}
+          </ThemedText>
+        </Pressable>
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
+  keyboardAvoidingView: { flex: 1 },
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: Spacing.four,
+    gap: 20,
+    marginBottom: 32,
   },
-  backButton: {
-    width: 42,
-    height: 42,
+  headerTitle: { fontSize: 23, fontWeight: "700" },
+  title: { fontSize: 30, lineHeight: 40, fontWeight: "700" },
+  related: {
+    borderRadius: 16,
+    padding: 18,
+    gap: 8,
+    marginTop: 22,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  relatedActivity: { gap: 4, paddingTop: 4 },
+  relatedActivityTitle: { fontSize: 15, fontWeight: "700" },
+  sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 4 },
+  sectionHeading: {
+    fontSize: 23,
+    fontWeight: "700",
+    marginTop: 30,
+    marginBottom: 12,
+  },
+  fields: { gap: 12 },
+  fieldCard: {
     borderRadius: 14,
+    padding: 16,
+    gap: 9,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  label: { fontSize: 15, fontWeight: "700" },
+  input: {
+    minHeight: 70,
+    borderRadius: 9,
+    padding: 12,
+    textAlignVertical: "top",
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  esCard: {
+    borderRadius: 16,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    marginBottom: 30,
+  },
+  helper: { fontSize: 14, lineHeight: 21 },
+  singleInput: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 15 },
+  countRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  limitInput: {
+    borderWidth: 1,
+    borderRadius: 7,
+    padding: 8,
+    width: 68,
+    textAlign: "center",
+  },
+  esInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 180,
+    textAlignVertical: "top",
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  saveButton: {
+    minHeight: 54,
+    borderRadius: 16,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  sectionCard: {
-    borderRadius: 24,
-    padding: Spacing.four,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    gap: 12,
-    marginTop: Spacing.four,
-  },
-  detailRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  metricRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: 8,
+    marginTop: 16,
+    marginBottom: 30,
   },
-  metricPill: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  relatedSection: {
-    marginTop: Spacing.four,
-    marginBottom: Spacing.six,
-  },
-  relatedList: {
-    gap: Spacing.four,
-  },
+  saveButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700" },
 });
