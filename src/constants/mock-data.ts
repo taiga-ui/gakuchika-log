@@ -3,6 +3,7 @@ import type {
   EsDraft,
   GakuchikaRecord,
   ProfileSummary,
+  Project,
 } from "@/types/domain";
 
 export const PROFILE: ProfileSummary = {
@@ -13,12 +14,72 @@ export const PROFILE: ProfileSummary = {
   target: "IT・SaaS業界",
 };
 
+export const MOCK_PROJECTS: Project[] = [
+  {
+    id: "project-club",
+    name: "学園祭企画",
+    description: "学園祭の企画と運営を記録するプロジェクト",
+    category: "club",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-26T09:00:00.000Z",
+  },
+  {
+    id: "project-internship",
+    name: "商社インターン",
+    category: "internship",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-10T10:00:00.000Z",
+  },
+  {
+    id: "project-competition",
+    name: "学内ハッカソン",
+    category: "competition",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-08T09:30:00.000Z",
+  },
+  {
+    id: "project-development",
+    name: "React学習会",
+    category: "development",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-24T10:00:00.000Z",
+  },
+  {
+    id: "project-research",
+    name: "マーケティングゼミ",
+    category: "research",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-20T12:00:00.000Z",
+  },
+  {
+    id: "project-part-time",
+    name: "カフェバイト",
+    category: "part-time",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-18T15:00:00.000Z",
+  },
+  {
+    id: "project-study",
+    name: "就活準備",
+    category: "study",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-15T08:00:00.000Z",
+  },
+  {
+    id: "project-volunteer",
+    name: "地域イベント",
+    category: "volunteer",
+    createdAt: "2026-07-01T09:00:00.000Z",
+    updatedAt: "2026-07-11T11:00:00.000Z",
+  },
+];
+
 export const MOCK_ACTIVITIES: ActivityRecord[] = [
   {
     id: "activity-001",
     title: "学園祭の企画班で導線改善を担当",
     body: "来場者の動きと混雑箇所を整理し、案内表示と導線を見直した。写真付きで改善前後を比較できるように記録した。",
-    categoryKey: "club",
+    projectId: "project-club",
     tagIds: ["leadership", "teamwork", "improvement"],
     date: "2026-07-26",
     photoAsset: require("../../assets/images/tutorial-web.png"),
@@ -32,7 +93,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-007",
     title: "商社インターンで営業資料の改善提案を実施",
     body: "提案資料の見せ方を整理し、相手の理解が進みやすい構成に改善した。",
-    categoryKey: "internship",
+    projectId: "project-internship",
     tagIds: ["presentation", "analysis", "improvement"],
     date: "2026-07-10",
     photoAsset: require("../../assets/images/react-logo.png"),
@@ -46,8 +107,8 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-008",
     title: "AIイベントでプロトタイプを発表した",
     body: "学生向けの体験型コンテンツを題材に、プロトタイプと改善ポイントを発表した。",
-    categoryKey: "competition",
-    tagIds: ["presentation", "innovation", "teamwork"],
+    projectId: "project-competition",
+    tagIds: ["presentation", "teamwork"],
     date: "2026-07-08",
     photoAsset: require("../../assets/images/logo-glow.png"),
     photoLabel: "発表時のデモ画面",
@@ -60,7 +121,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-002",
     title: "React学習会でUI改善を発表",
     body: "アクセシビリティを意識したコンポーネント分割を紹介し、画面設計の意図を説明した。",
-    categoryKey: "development",
+    projectId: "project-development",
     tagIds: ["react", "uiux", "presentation"],
     date: "2026-07-24",
     photoAsset: require("../../assets/images/react-logo.png"),
@@ -74,7 +135,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-003",
     title: "ゼミで競合分析の資料を作成",
     body: "数字の根拠を揃えて、比較の観点を整理。説明の順番まで意識して資料を作成した。",
-    categoryKey: "research",
+    projectId: "project-research",
     tagIds: ["analysis", "numbers", "presentation"],
     date: "2026-07-20",
     metrics: ["比較対象 8社", "資料 12ページ"],
@@ -86,7 +147,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-004",
     title: "アルバイトで新人教育マニュアルを刷新",
     body: "手順の抜け漏れを洗い出し、写真と短い説明で読みやすい資料にまとめた。",
-    categoryKey: "part-time",
+    projectId: "project-part-time",
     tagIds: ["teamwork", "improvement", "numbers"],
     date: "2026-07-18",
     photoAsset: require("../../assets/images/expo-logo.png"),
@@ -100,7 +161,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-005",
     title: "就活イベントで自己分析を深めた",
     body: "強みの再整理を行い、面接で話す材料を活動ベースで棚卸しした。",
-    categoryKey: "study",
+    projectId: "project-study",
     tagIds: ["recruiting", "analysis"],
     date: "2026-07-15",
     metrics: ["面談 2回", "メモ 18件"],
@@ -112,7 +173,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     id: "activity-006",
     title: "ボランティアで配布物の導線を整備",
     body: "参加者が迷わないように案内の流れを見直し、現場で試しながら修正した。",
-    categoryKey: "volunteer",
+    projectId: "project-volunteer",
     tagIds: ["teamwork", "leadership"],
     date: "2026-07-11",
     photoAsset: require("../../assets/images/logo-glow.png"),
@@ -123,14 +184,6 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     updatedAt: "2026-07-11T11:00:00.000Z",
   },
 ];
-
-export const CATEGORY_COUNT_MAP = MOCK_ACTIVITIES.reduce(
-  (acc, activity) => {
-    acc[activity.categoryKey] = (acc[activity.categoryKey] ?? 0) + 1;
-    return acc;
-  },
-  {} as Record<string, number>,
-);
 
 export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   {

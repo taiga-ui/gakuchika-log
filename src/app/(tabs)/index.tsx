@@ -12,10 +12,13 @@ export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
   const activities = useAppStore((state) => state.activities);
+  const projects = useAppStore((state) => state.projects);
 
   const recentActivities = activities.slice(0, 3);
   const recentRecords = recentActivities.map((activity, index) => ({
-    category: activity.categoryKey,
+    category:
+      projects.find((project) => project.id === activity.projectId)?.category ??
+      "study",
     title: activity.title,
     body: activity.body,
     icon: (index === 0

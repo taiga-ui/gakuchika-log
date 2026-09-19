@@ -15,6 +15,11 @@ export default function RootLayout() {
             name="activities/new"
             options={{ presentation: "modal" }}
           />
+          <Stack.Screen
+            name="projects/new"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen name="projects/[id]" />
           <Stack.Screen name="gakuchika/index" />
           <Stack.Screen name="gakuchika/[id]" />
           <Stack.Screen name="es/index" />

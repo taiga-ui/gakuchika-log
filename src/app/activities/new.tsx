@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -7,7 +7,6 @@ import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { TagChip } from "@/components/ui/tag-chip";
-import { ACTIVITY_CATEGORIES } from "@/constants/categories";
 import { TAGS } from "@/constants/tags";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -17,40 +16,38 @@ import { toIsoDate } from "@/utils/date";
 export default function NewActivityScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { projectId } = useLocalSearchParams<{ projectId?: string }>();
+  const projects = useAppStore((state) => state.projects);
   const addActivity = useAppStore((state) => state.addActivity);
-
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [date, setDate] = useState(toIsoDate(new Date()));
   const [location, setLocation] = useState("");
-  const [categoryKey, setCategoryKey] =
-    useState<(typeof ACTIVITY_CATEGORIES)[number]["key"]>("research");
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    projectId ?? projects[0]?.id ?? "",
+  );
   const [tagIds, setTagIds] = useState<Array<(typeof TAGS)[number]["id"]>>([
     "analysis",
   ]);
 
   const handleSave = () => {
-    if (!title.trim() || !body.trim()) return;
-
+    if (!title.trim() || !body.trim() || !selectedProjectId) return;
     const created = addActivity({
       title: title.trim(),
       body: body.trim(),
       date,
       location: location.trim() || undefined,
-      categoryKey,
+      projectId: selectedProjectId,
       tagIds: tagIds.length ? tagIds : ["analysis"],
     });
-
     router.replace(`/activities/${created.id}`);
   };
-
-  const toggleTag = (tagId: (typeof TAGS)[number]["id"]) => {
+  const toggleTag = (tagId: (typeof TAGS)[number]["id"]) =>
     setTagIds((current) =>
       current.includes(tagId)
         ? current.filter((value) => value !== tagId)
         : [...current, tagId],
     );
-  };
 
   return (
     <Screen>
@@ -69,62 +66,61 @@ export default function NewActivityScreen() {
         <Pressable
           style={[styles.saveButton, { backgroundColor: theme.primary }]}
           onPress={handleSave}
-          disabled={!title.trim() || !body.trim()}
+          disabled={!title.trim() || !body.trim() || !selectedProjectId}
         >
           <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
             保存
           </ThemedText>
         </Pressable>
       </View>
-
       <View style={styles.section}>
         <FormField
           label="タイトル"
           value={title}
           onChangeText={setTitle}
-          placeholder="例: 学園祭の導線改善"
+          placeholder="例: UIを改善した"
         />
         <FormField
           label="内容"
           value={body}
           onChangeText={setBody}
-          placeholder="何をしたか、何に苦労したか、工夫したかを書き残す"
+          placeholder="何をしたか、工夫したかを書き残す"
           multiline
           numberOfLines={5}
-          helperText="後でESや面接に転用できるように、短くても事実を残す。"
         />
         <FormField
           label="日付"
           value={date}
           onChangeText={setDate}
-          placeholder="2026-07-28"
-          helperText="手入力でも、後で編集できる。"
+          placeholder="2026-09-19"
         />
         <FormField
           label="場所"
           value={location}
           onChangeText={setLocation}
-          placeholder="例: 大学 / バイト先 / サークル"
+          placeholder="例: 大学 / バイト先"
         />
       </View>
-
       <View style={styles.section}>
         <ThemedText type="smallBold" style={{ color: theme.text }}>
-          カテゴリ
+          プロジェクト
         </ThemedText>
         <View style={styles.filterRow}>
-          {ACTIVITY_CATEGORIES.map((category) => (
+          {projects.map((project) => (
             <TagChip
-              key={category.key}
-              label={category.label}
-              selected={categoryKey === category.key}
-              onPress={() => setCategoryKey(category.key)}
-              tone={category.softColor}
+              key={project.id}
+              label={project.name}
+              selected={selectedProjectId === project.id}
+              onPress={() => setSelectedProjectId(project.id)}
             />
           ))}
         </View>
+        {!projects.length ? (
+          <ThemedText style={{ color: theme.textSecondary }}>
+            先にプロジェクトを作成してください。
+          </ThemedText>
+        ) : null}
       </View>
-
       <View style={styles.section}>
         <ThemedText type="smallBold" style={{ color: theme.text }}>
           タグ
@@ -141,17 +137,18 @@ export default function NewActivityScreen() {
           ))}
         </View>
       </View>
-
       <Pressable
         style={[
           styles.fullButton,
           {
             backgroundColor:
-              title.trim() && body.trim() ? theme.primary : theme.textTertiary,
+              title.trim() && body.trim() && selectedProjectId
+                ? theme.primary
+                : theme.textTertiary,
           },
         ]}
         onPress={handleSave}
-        disabled={!title.trim() || !body.trim()}
+        disabled={!title.trim() || !body.trim() || !selectedProjectId}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           この内容で保存する
@@ -177,20 +174,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.light.border,
   },
-  saveButton: {
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  section: {
-    marginTop: Spacing.four,
-    gap: 12,
-  },
-  filterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
+  saveButton: { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
+  section: { marginTop: Spacing.four, gap: 12 },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   fullButton: {
     marginTop: Spacing.five,
     borderRadius: 18,
