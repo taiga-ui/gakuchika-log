@@ -14,9 +14,13 @@ export default function NewGakuchikaScreen() {
   const router = useRouter();
   const theme = useTheme();
   const activities = useAppStore((state) => state.activities);
+  const projects = useAppStore((state) => state.projects);
   const addGakuchika = useAppStore((state) => state.addGakuchika);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [title, setTitle] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    projects[0]?.id ?? "",
+  );
 
   const toggle = (id: string) =>
     setSelectedIds((current) =>
@@ -53,49 +57,89 @@ export default function NewGakuchikaScreen() {
           placeholder="例：サークルのアプリ開発プロジェクト"
         />
         <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
-          活動記録
+          プロジェクト
         </ThemedText>
-        {activities.map((activity) => {
-          const selected = selectedIds.includes(activity.id);
-          return (
+        <View style={styles.projectRow}>
+          {projects.map((project) => (
             <Pressable
-              key={activity.id}
-              onPress={() => toggle(activity.id)}
+              key={project.id}
+              onPress={() => {
+                setSelectedProjectId(project.id);
+                setSelectedIds([]);
+              }}
               style={[
-                styles.activity,
+                styles.projectChip,
                 {
-                  borderColor: selected ? theme.primary : Colors.light.border,
-                  backgroundColor: selected
-                    ? theme.surfaceSelected
-                    : theme.surface,
+                  backgroundColor:
+                    selectedProjectId === project.id
+                      ? theme.primary
+                      : theme.surfaceMuted,
                 },
               ]}
             >
-              <Ionicons
-                name={selected ? "checkbox" : "square-outline"}
-                size={25}
-                color={selected ? theme.primary : theme.textTertiary}
-              />
-              <View style={{ flex: 1 }}>
-                <ThemedText
-                  style={[styles.activityTitle, { color: theme.text }]}
-                >
-                  {activity.title}
-                </ThemedText>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {activity.location || "活動記録"}
-                </ThemedText>
-                <ThemedText
-                  type="small"
-                  numberOfLines={2}
-                  style={{ color: theme.textSecondary, marginTop: 4 }}
-                >
-                  {activity.body}
-                </ThemedText>
-              </View>
+              <ThemedText
+                type="smallBold"
+                style={{
+                  color:
+                    selectedProjectId === project.id
+                      ? "#FFFFFF"
+                      : theme.textSecondary,
+                }}
+              >
+                {project.name}
+              </ThemedText>
             </Pressable>
-          );
-        })}
+          ))}
+        </View>
+        <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
+          活動記録
+        </ThemedText>
+        {activities
+          .filter((activity) => activity.projectId === selectedProjectId)
+          .map((activity) => {
+            const selected = selectedIds.includes(activity.id);
+            return (
+              <Pressable
+                key={activity.id}
+                onPress={() => toggle(activity.id)}
+                style={[
+                  styles.activity,
+                  {
+                    borderColor: selected ? theme.primary : Colors.light.border,
+                    backgroundColor: selected
+                      ? theme.surfaceSelected
+                      : theme.surface,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={selected ? "checkbox" : "square-outline"}
+                  size={25}
+                  color={selected ? theme.primary : theme.textTertiary}
+                />
+                <View style={{ flex: 1 }}>
+                  <ThemedText
+                    style={[styles.activityTitle, { color: theme.text }]}
+                  >
+                    {activity.title}
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    {activity.location || "活動記録"}
+                  </ThemedText>
+                  <ThemedText
+                    type="small"
+                    numberOfLines={2}
+                    style={{ color: theme.textSecondary, marginTop: 4 }}
+                  >
+                    {activity.body}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            );
+          })}
         <ThemedText style={{ color: theme.textSecondary, marginTop: 12 }}>
           選択中：{selectedIds.length}件
         </ThemedText>
@@ -146,6 +190,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
+  projectRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  projectChip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 9 },
   activityTitle: { fontSize: 16, fontWeight: "700", lineHeight: 22 },
   primaryButton: {
     alignSelf: "flex-end",
