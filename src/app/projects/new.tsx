@@ -30,17 +30,16 @@ export default function NewProjectScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.back()} style={{ marginTop: 10 }}>
           <Ionicons name="close" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="smallBold" style={{ color: theme.primary }}>
+        <ThemedText
+          type="smallBold"
+          style={{ color: theme.primary, marginTop: 10 }}
+        >
           プロジェクトを追加
         </ThemedText>
       </View>
-
-      <ThemedText type="title" style={{ color: theme.text }}>
-        プロジェクトを追加
-      </ThemedText>
 
       <View style={styles.section}>
         <FormField
