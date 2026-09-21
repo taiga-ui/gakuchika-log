@@ -41,6 +41,8 @@ export default function ActivityDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const activities = useAppStore((state) => state.activities);
   const tags = useAppStore((state) => state.tags);
+  const projects = useAppStore((state) => state.projects);
+  const deleteActivity = useAppStore((state) => state.deleteActivity);
   const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
   const activityId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -60,7 +62,10 @@ export default function ActivityDetailScreen() {
     );
   }
 
-  const category = CATEGORY_MAP[activity.categoryKey];
+  const project = projects.find((item) => item.id === activity.projectId);
+  const category = project
+    ? CATEGORY_MAP[project.category]
+    : CATEGORY_MAP.study;
   const relatedGakuchika = gakuchikaRecords.find((item) =>
     item.relatedActivityIds.includes(activity.id),
   );
@@ -82,12 +87,20 @@ export default function ActivityDetailScreen() {
             ガクチカにつながる記録を1件ずつ残す
           </ThemedText>
         </View>
+        <Pressable
+          onPress={() => {
+            deleteActivity(activityId ?? "");
+            router.back();
+          }}
+        >
+          <Ionicons name="trash-outline" size={22} color={theme.textTertiary} />
+        </Pressable>
       </View>
 
       <PhotoHeader
         photoAsset={activity.photoAsset}
         photoLabel={activity.photoLabel}
-        categoryKey={activity.categoryKey}
+        categoryKey={project?.category ?? "study"}
         title={activity.title}
         subtitle={activity.body}
       />
@@ -110,7 +123,7 @@ export default function ActivityDetailScreen() {
             ]}
           >
             <ThemedText type="smallBold" style={{ color: category.color }}>
-              {category.label}
+              {project?.name ?? category.label}
             </ThemedText>
           </View>
           <ThemedText type="small" style={{ color: theme.textTertiary }}>

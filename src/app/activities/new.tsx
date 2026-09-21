@@ -2,12 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { TagChip } from "@/components/ui/tag-chip";
 import type { TagId } from "@/constants/tags";
+import { TAGS } from "@/constants/tags";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -39,6 +42,9 @@ export default function NewActivityScreen() {
   );
   const addTag = useAppStore((state) => state.addTag);
 
+  const { projectId } = useLocalSearchParams<{ projectId?: string }>();
+  const projects = useAppStore((state) => state.projects);
+  const addActivity = useAppStore((state) => state.addActivity);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [date, setDate] = useState(toIsoDate(new Date()));
@@ -68,26 +74,35 @@ export default function NewActivityScreen() {
     if (!projectId) return;
     const project = projects.find((item) => item.id === projectId);
     if (!project) return;
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    projectId ?? projects[0]?.id ?? "",
+  );
+  const [tagIds, setTagIds] = useState<Array<(typeof TAGS)[number]["id"]>>([
+    "analysis",
+  ]);
+
+  const handleSave = () => {
+    if (!title.trim() || !body.trim() || !selectedProjectId) return;
     const created = addActivity({
-      title: title.trim() || "新しい活動",
-      body: body.trim() || "記録を追加して、あとで振り返れるようにする。",
+      title: title.trim(),
+      body: body.trim(),
       date,
       location: location.trim() || undefined,
       categoryKey: project.categoryKey,
       projectId: project.id,
+      projectId: selectedProjectId,
       tagIds: tagIds.length ? tagIds : ["analysis"],
     });
-
     router.replace(`/activities/${created.id}`);
   };
 
   const toggleTag = (tagId: TagId) => {
+  const toggleTag = (tagId: (typeof TAGS)[number]["id"]) =>
     setTagIds((current) =>
       current.includes(tagId)
         ? current.filter((value) => value !== tagId)
         : [...current, tagId],
     );
-  };
 
   const handleAddTag = () => {
     const label = newTagName.trim();
@@ -139,27 +154,33 @@ export default function NewActivityScreen() {
         <Pressable
           style={[styles.saveButton, { backgroundColor: theme.primary }]}
           onPress={handleSave}
+          disabled={!title.trim() || !body.trim() || !selectedProjectId}
         >
           <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
             保存
           </ThemedText>
         </Pressable>
       </View>
-
       <View style={styles.section}>
         <FormField
           label="タイトル"
           value={title}
           onChangeText={setTitle}
-          placeholder="例: 学園祭の導線改善"
+          placeholder="例: UIを改善した"
         />
         <FormField
           label="内容"
           value={body}
           onChangeText={setBody}
-          placeholder="何をしたか、何に苦労したか、工夫したかを書き残す"
+          placeholder="何をしたか、工夫したかを書き残す"
           multiline
           numberOfLines={5}
+        />
+        <FormField
+          label="日付"
+          value={date}
+          onChangeText={setDate}
+          placeholder="2026-09-19"
         />
         <View style={styles.dateField}>
           <ThemedText type="smallBold" style={{ color: theme.text }}>
@@ -182,10 +203,9 @@ export default function NewActivityScreen() {
           label="場所"
           value={location}
           onChangeText={setLocation}
-          placeholder="例: 大学 / バイト先 / サークル"
+          placeholder="例: 大学 / バイト先"
         />
       </View>
-
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <ThemedText type="smallBold" style={{ color: theme.text }}>
@@ -215,8 +235,25 @@ export default function NewActivityScreen() {
             まだプロジェクトがありません
           </ThemedText>
         )}
+        <ThemedText type="smallBold" style={{ color: theme.text }}>
+          プロジェクト
+        </ThemedText>
+        <View style={styles.filterRow}>
+          {projects.map((project) => (
+            <TagChip
+              key={project.id}
+              label={project.name}
+              selected={selectedProjectId === project.id}
+              onPress={() => setSelectedProjectId(project.id)}
+            />
+          ))}
+        </View>
+        {!projects.length ? (
+          <ThemedText style={{ color: theme.textSecondary }}>
+            先にプロジェクトを作成してください。
+          </ThemedText>
+        ) : null}
       </View>
-
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <ThemedText type="smallBold" style={{ color: theme.text }}>
@@ -242,13 +279,19 @@ export default function NewActivityScreen() {
           ))}
         </View>
       </View>
-
       <Pressable
         style={[
           styles.fullButton,
           { backgroundColor: theme.primary, opacity: projectId ? 1 : 0.5 },
+          {
+            backgroundColor:
+              title.trim() && body.trim() && selectedProjectId
+                ? theme.primary
+                : theme.textTertiary,
+          },
         ]}
         onPress={handleSave}
+        disabled={!title.trim() || !body.trim() || !selectedProjectId}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           この内容で保存する
@@ -515,6 +558,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
+  saveButton: { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
+  section: { marginTop: Spacing.four, gap: 12 },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   fullButton: {
     marginTop: Spacing.five,
     borderRadius: 18,

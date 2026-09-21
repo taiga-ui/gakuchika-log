@@ -9,7 +9,6 @@ import {
   ACTIVITY_CATEGORIES,
   type ActivityCategoryKey,
 } from "@/constants/categories";
-import { CATEGORY_COUNT_MAP } from "@/constants/mock-data";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -21,9 +20,11 @@ export default function SearchScreen() {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const setSelectedCategory = useAppStore((state) => state.setSelectedCategory);
+  const setSearchQuery = useAppStore((state) => state.setSearchQuery);
+  const projects = useAppStore((state) => state.projects);
 
   const getCountLabel = (key: ActivityCategoryKey) =>
-    `${CATEGORY_COUNT_MAP[key] ?? 0}件の記録`;
+    `${projects.filter((project) => project.category === key).length}個のプロジェクト`;
 
   return (
     <Screen>
@@ -70,7 +71,10 @@ export default function SearchScreen() {
           <TextInput
             ref={inputRef}
             value={query}
-            onChangeText={setQuery}
+            onChangeText={(value) => {
+              setQuery(value);
+              setSearchQuery(value);
+            }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="キーワード検索"

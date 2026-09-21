@@ -7,8 +7,20 @@ export type ISODateString = string;
 
 export type PhotoAsset = ImageSourcePropType | null;
 
+export type Project = {
+  id: string;
+  name: string;
+  description?: string;
+  category: ActivityCategoryKey;
+  startDate?: ISODateString;
+  endDate?: ISODateString;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+};
+
 export type ActivityRecord = {
   id: string;
+  projectId: string;
   title: string;
   body: string;
   categoryKey: ActivityCategoryKey;
@@ -45,6 +57,22 @@ export type GakuchikaRecord = {
   numbers: string[];
   artifact: string;
   relatedActivityIds: string[];
+  reflection?: Partial<{
+    activity: string;
+    challenge: string;
+    difficulty: string;
+    action: string;
+    role: string;
+    result: string;
+    learning: string;
+  }>;
+  es?: {
+    company: string;
+    question: string;
+    maxCharacters: number;
+    content: string;
+  };
+  savedAt?: ISODateString;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 };

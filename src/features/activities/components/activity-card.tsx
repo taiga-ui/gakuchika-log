@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { PhotoHeader } from "@/components/ui/photo-header";
 import { TagChip } from "@/components/ui/tag-chip";
+import type { ActivityCategoryKey } from "@/constants/categories";
 import { CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -12,13 +13,19 @@ import { formatJapaneseDate } from "@/utils/date";
 
 type ActivityCardProps = {
   activity: ActivityRecord;
+  categoryKey?: ActivityCategoryKey;
   onPress?: () => void;
 };
 
-export function ActivityCard({ activity, onPress }: ActivityCardProps) {
+export function ActivityCard({
+  activity,
+  categoryKey,
+  onPress,
+}: ActivityCardProps) {
   const theme = useTheme();
   const tags = useAppStore((state) => state.tags);
   const category = CATEGORY_MAP[activity.categoryKey];
+  const category = CATEGORY_MAP[categoryKey ?? "study"];
 
   return (
     <Pressable
@@ -32,7 +39,7 @@ export function ActivityCard({ activity, onPress }: ActivityCardProps) {
       <PhotoHeader
         photoAsset={activity.photoAsset}
         photoLabel={activity.photoLabel}
-        categoryKey={activity.categoryKey}
+        categoryKey={categoryKey ?? "study"}
         title={activity.title}
         subtitle={activity.body}
       />

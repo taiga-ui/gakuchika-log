@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "flex-end",
     padding: Spacing.four,
     backgroundColor: "rgba(0,0,0,0.06)",
