@@ -1,14 +1,4 @@
-export type TagId =
-  | "leadership"
-  | "teamwork"
-  | "analysis"
-  | "presentation"
-  | "recruiting"
-  | "uiux"
-  | "react"
-  | "github"
-  | "numbers"
-  | "improvement";
+export type TagId = string;
 
 export type TagMeta = {
   id: TagId;

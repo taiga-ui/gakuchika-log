@@ -142,6 +142,13 @@ export default function GakuchikaScreen() {
           ))
         )}
       </View>
+
+      <Pressable
+        style={[styles.fab, { backgroundColor: "#0B7A57" }]}
+        onPress={() => router.push("/projects/new")}
+      >
+        <Ionicons name="add" size={32} color="#FFFFFF" />
+      </Pressable>
     </Screen>
   );
 }

@@ -185,6 +185,59 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
 ];
 
+export const MOCK_PROJECTS: Project[] = [
+  {
+    id: "project-festival",
+    name: "学園祭企画",
+    categoryKey: "club",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-trading",
+    name: "商社インターン",
+    categoryKey: "internship",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-hackathon",
+    name: "学内ハッカソン",
+    categoryKey: "competition",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-react",
+    name: "React学習会",
+    categoryKey: "development",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-seminar",
+    name: "マーケティングゼミ",
+    categoryKey: "research",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-cafe",
+    name: "カフェバイト",
+    categoryKey: "part-time",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+];
+
+export const CATEGORY_COUNT_MAP = MOCK_ACTIVITIES.reduce(
+  (acc, activity) => {
+    acc[activity.categoryKey] = (acc[activity.categoryKey] ?? 0) + 1;
+    return acc;
+  },
+  {} as Record<string, number>,
+);
+
 export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   {
     id: "gk-001",
