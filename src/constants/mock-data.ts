@@ -3,6 +3,7 @@ import type {
   EsDraft,
   GakuchikaRecord,
   ProfileSummary,
+  Project,
 } from "@/types/domain";
 
 export const PROFILE: ProfileSummary = {
@@ -121,6 +122,51 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
     location: "地域イベント",
     createdAt: "2026-07-11T11:00:00.000Z",
     updatedAt: "2026-07-11T11:00:00.000Z",
+  },
+];
+
+export const MOCK_PROJECTS: Project[] = [
+  {
+    id: "project-festival",
+    name: "学園祭企画",
+    categoryKey: "club",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-trading",
+    name: "商社インターン",
+    categoryKey: "internship",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-hackathon",
+    name: "学内ハッカソン",
+    categoryKey: "competition",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-react",
+    name: "React学習会",
+    categoryKey: "development",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-seminar",
+    name: "マーケティングゼミ",
+    categoryKey: "research",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
+  },
+  {
+    id: "project-cafe",
+    name: "カフェバイト",
+    categoryKey: "part-time",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
   },
 ];
 

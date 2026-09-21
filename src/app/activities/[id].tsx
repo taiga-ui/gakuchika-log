@@ -7,7 +7,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PhotoHeader } from "@/components/ui/photo-header";
 import { Screen } from "@/components/ui/screen";
 import { CATEGORY_MAP } from "@/constants/categories";
-import { TAG_MAP } from "@/constants/tags";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -41,6 +40,7 @@ export default function ActivityDetailScreen() {
   const theme = useTheme();
   const params = useLocalSearchParams<{ id?: string }>();
   const activities = useAppStore((state) => state.activities);
+  const tags = useAppStore((state) => state.tags);
   const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
   const activityId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -121,22 +121,22 @@ export default function ActivityDetailScreen() {
 
       <SectionBlock title="タグ">
         <View style={styles.tagRow}>
-          {activity.tagIds.map((tagId) => (
-            <View
-              key={tagId}
-              style={[
-                styles.tag,
-                { backgroundColor: TAG_MAP[tagId].softColor },
-              ]}
-            >
-              <ThemedText
-                type="smallBold"
-                style={{ color: TAG_MAP[tagId].color }}
-              >
-                {TAG_MAP[tagId].label}
-              </ThemedText>
-            </View>
-          ))}
+          {activity.tagIds.map((tagId) =>
+            (() => {
+              const tag = tags.find((item) => item.id === tagId);
+              if (!tag) return null;
+              return (
+                <View
+                  key={tagId}
+                  style={[styles.tag, { backgroundColor: tag.softColor }]}
+                >
+                  <ThemedText type="smallBold" style={{ color: tag.color }}>
+                    {tag.label}
+                  </ThemedText>
+                </View>
+              );
+            })(),
+          )}
         </View>
       </SectionBlock>
 

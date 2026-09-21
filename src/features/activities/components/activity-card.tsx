@@ -4,9 +4,9 @@ import { ThemedText } from "@/components/themed-text";
 import { PhotoHeader } from "@/components/ui/photo-header";
 import { TagChip } from "@/components/ui/tag-chip";
 import { CATEGORY_MAP } from "@/constants/categories";
-import { TAG_MAP } from "@/constants/tags";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { useAppStore } from "@/store/use-app-store";
 import type { ActivityRecord } from "@/types/domain";
 import { formatJapaneseDate } from "@/utils/date";
 
@@ -17,6 +17,7 @@ type ActivityCardProps = {
 
 export function ActivityCard({ activity, onPress }: ActivityCardProps) {
   const theme = useTheme();
+  const tags = useAppStore((state) => state.tags);
   const category = CATEGORY_MAP[activity.categoryKey];
 
   return (
@@ -88,13 +89,14 @@ export function ActivityCard({ activity, onPress }: ActivityCardProps) {
         </View>
       ) : null}
       <View style={styles.tagRow}>
-        {activity.tagIds.slice(0, 3).map((tagId) => (
-          <TagChip
-            key={tagId}
-            label={TAG_MAP[tagId].label}
-            tone={TAG_MAP[tagId].softColor}
-          />
-        ))}
+        {activity.tagIds.slice(0, 3).map((tagId) =>
+          (() => {
+            const tag = tags.find((item) => item.id === tagId);
+            return tag ? (
+              <TagChip key={tagId} label={tag.label} tone={tag.softColor} />
+            ) : null;
+          })(),
+        )}
       </View>
     </Pressable>
   );
