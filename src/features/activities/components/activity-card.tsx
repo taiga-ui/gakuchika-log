@@ -24,8 +24,7 @@ export function ActivityCard({
 }: ActivityCardProps) {
   const theme = useTheme();
   const tags = useAppStore((state) => state.tags);
-  const category = CATEGORY_MAP[activity.categoryKey];
-  const category = CATEGORY_MAP[categoryKey ?? "study"];
+  const category = CATEGORY_MAP[categoryKey ?? activity.categoryKey];
 
   return (
     <Pressable

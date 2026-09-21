@@ -21,7 +21,6 @@ import type {
 import { toIsoDate } from "@/utils/date";
 
 type ActivityDraft = Omit<ActivityRecord, "id" | "createdAt" | "updatedAt">;
-type ProjectDraft = Omit<Project, "id" | "createdAt" | "updatedAt">;
 const STORAGE_KEY = "gakuchika-log-state-v2";
 
 type AppState = {
@@ -38,12 +37,11 @@ type AppState = {
   setSelectedCategory: (category: string) => void;
   updateProfile: (patch: Partial<ProfileSummary>) => void;
   addActivity: (draft: ActivityDraft) => ActivityRecord;
-  addProject: (name: string, categoryKey: Project["categoryKey"]) => Project;
+  addProject: (name: string, category: Project["category"]) => Project;
   addTag: (label: string) => TagMeta;
   clearLastCreatedProject: () => void;
   updateActivity: (id: string, patch: Partial<ActivityRecord>) => void;
   deleteActivity: (id: string) => void;
-  addProject: (draft: ProjectDraft) => Project;
   updateProject: (id: string, patch: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   addGakuchika: (activityIds: string[], title?: string) => GakuchikaRecord;
@@ -59,12 +57,6 @@ type AppState = {
 const createId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-const memoryStorage = {
-  getItem: () => null,
-  setItem: () => undefined,
-  removeItem: () => undefined,
-};
-
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
@@ -79,12 +71,7 @@ export const useAppStore = create<AppState>()(
       setSearchQuery: (query) => set({ searchQuery: query }),
       setSelectedCategory: (category) => set({ selectedCategory: category }),
       updateProfile: (patch) =>
-        set((state) => ({
-          profile: {
-            ...state.profile,
-            ...patch,
-          },
-        })),
+        set((state) => ({ profile: { ...state.profile, ...patch } })),
       addActivity: (draft) => {
         const now = new Date();
         const record: ActivityRecord = {
@@ -94,182 +81,51 @@ export const useAppStore = create<AppState>()(
           updatedAt: now.toISOString(),
           date: draft.date || toIsoDate(now),
         };
-
         set((state) => ({ activities: [record, ...state.activities] }));
-const persist = (state: Partial<AppState>) => {
-  void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {
-    // Expo Go can run without the native AsyncStorage module linked.
-  });
-};
-
-const restorePersistedState = async () => {
-  try {
-    return await AsyncStorage.getItem(STORAGE_KEY);
-  } catch {
-    // Keep the bundled initial state when local storage is unavailable.
-    return null;
-  }
-};
-
-export const useAppStore = create<AppState>((set) => ({
-  profile: PROFILE,
-  activities: MOCK_ACTIVITIES,
-  projects: MOCK_PROJECTS,
-  gakuchikaRecords: MOCK_GAKUCHIKA,
-  esDrafts: MOCK_ES_DRAFTS,
-  searchQuery: "",
-  selectedCategory: "all",
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  setSelectedCategory: (category) => set({ selectedCategory: category }),
-  updateProfile: (patch) =>
-    set((state) => ({
-      profile: {
-        ...state.profile,
-        ...patch,
-      },
-    })),
-  addActivity: (draft) => {
-    const now = new Date();
-    const record: ActivityRecord = {
-      ...draft,
-      id: createId("activity"),
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      date: draft.date || toIsoDate(now),
-    };
-
-    set((state) => {
-      const next = { activities: [record, ...state.activities] };
-      persist({ ...state, ...next });
-      return next;
-    });
-
-    return record;
-  },
-  updateActivity: (id, patch) =>
-    set((state) => {
-      const next = {
-        activities: state.activities.map((activity) =>
-          activity.id === id
-            ? {
-                ...activity,
-                ...patch,
-                updatedAt: new Date().toISOString(),
-              }
-            : activity,
-        ),
-      };
-      persist({ ...state, ...next });
-      return next;
-    }),
-  deleteActivity: (id) =>
-    set((state) => {
-      const next = {
-        activities: state.activities.filter((activity) => activity.id !== id),
-      };
-      persist({ ...state, ...next });
-      return next;
-    }),
-  addProject: (draft) => {
-    const now = new Date().toISOString();
-    const project: Project = {
-      ...draft,
-      id: createId("project"),
-      createdAt: now,
-      updatedAt: now,
-    };
-    set((state) => {
-      const next = { projects: [project, ...state.projects] };
-      persist({ ...state, ...next });
-      return next;
-    });
-    return project;
-  },
-  updateProject: (id, patch) =>
-    set((state) => {
-      const next = {
-        projects: state.projects.map((project) =>
-          project.id === id
-            ? { ...project, ...patch, updatedAt: new Date().toISOString() }
-            : project,
-        ),
-      };
-      persist({ ...state, ...next });
-      return next;
-    }),
-  deleteProject: (id) =>
-    set((state) => {
-      const next = {
-        projects: state.projects.filter((project) => project.id !== id),
-        activities: state.activities.filter(
-          (activity) => activity.projectId !== id,
-        ),
-      };
-      persist({ ...state, ...next });
-      return next;
-    }),
-  addGakuchika: (activityIds, title) => {
-    const now = new Date().toISOString();
-    const record: GakuchikaRecord = {
-      id: createId("gakuchika"),
-      title: title?.trim() || "無題のガクチカ",
-      overview: "",
-      period: "",
-      role: "",
-      challenge: "",
-      difficulty: "",
-      action: "",
-      result: "",
-      learning: "",
-      numbers: [],
-      artifact: "",
-      relatedActivityIds: activityIds,
-      createdAt: now,
-      updatedAt: now,
-    };
-    set((state) => ({ gakuchikaRecords: [record, ...state.gakuchikaRecords] }));
-    return record;
-  },
-  updateGakuchika: (id, patch) =>
-    set((state) => ({
-      gakuchikaRecords: state.gakuchikaRecords.map((record) =>
-        record.id === id
-          ? { ...record, ...patch, updatedAt: new Date().toISOString() }
-          : record,
-      ),
-    })),
-  saveGakuchika: (id) =>
-    set((state) => ({
-      gakuchikaRecords: state.gakuchikaRecords.map((record) =>
-        record.id === id
-          ? { ...record, savedAt: new Date().toISOString() }
-          : record,
-      ),
-    })),
-  addEsDraft: (draft) => {
-    const record: EsDraft = {
-      ...draft,
-      id: createId("es"),
-      updatedAt: new Date().toISOString(),
-    };
-
         return record;
       },
-      addProject: (name, categoryKey) => {
+      updateActivity: (id, patch) =>
+        set((state) => ({
+          activities: state.activities.map((activity) =>
+            activity.id === id
+              ? { ...activity, ...patch, updatedAt: new Date().toISOString() }
+              : activity,
+          ),
+        })),
+      deleteActivity: (id) =>
+        set((state) => ({
+          activities: state.activities.filter((activity) => activity.id !== id),
+        })),
+      addProject: (name, category) => {
         const now = new Date().toISOString();
         const project: Project = {
           id: createId("project"),
           name,
-          categoryKey,
+          category,
           createdAt: now,
           updatedAt: now,
         };
         set((state) => ({
-          projects: [...state.projects, project],
+          projects: [project, ...state.projects],
           lastCreatedProjectId: project.id,
         }));
         return project;
       },
+      updateProject: (id, patch) =>
+        set((state) => ({
+          projects: state.projects.map((project) =>
+            project.id === id
+              ? { ...project, ...patch, updatedAt: new Date().toISOString() }
+              : project,
+          ),
+        })),
+      deleteProject: (id) =>
+        set((state) => ({
+          projects: state.projects.filter((project) => project.id !== id),
+          activities: state.activities.filter(
+            (activity) => activity.projectId !== id,
+          ),
+        })),
       addTag: (label) => {
         const tag: TagMeta = {
           id: createId("tag") as TagId,
@@ -281,16 +137,44 @@ export const useAppStore = create<AppState>((set) => ({
         return tag;
       },
       clearLastCreatedProject: () => set({ lastCreatedProjectId: undefined }),
-      updateActivity: (id, patch) =>
+      addGakuchika: (activityIds, title) => {
+        const now = new Date().toISOString();
+        const record: GakuchikaRecord = {
+          id: createId("gakuchika"),
+          title: title?.trim() || "無題のガクチカ",
+          overview: "",
+          period: "",
+          role: "",
+          challenge: "",
+          difficulty: "",
+          action: "",
+          result: "",
+          learning: "",
+          numbers: [],
+          artifact: "",
+          relatedActivityIds: activityIds,
+          createdAt: now,
+          updatedAt: now,
+        };
         set((state) => ({
-          activities: state.activities.map((activity) =>
-            activity.id === id
-              ? {
-                  ...activity,
-                  ...patch,
-                  updatedAt: new Date().toISOString(),
-                }
-              : activity,
+          gakuchikaRecords: [record, ...state.gakuchikaRecords],
+        }));
+        return record;
+      },
+      updateGakuchika: (id, patch) =>
+        set((state) => ({
+          gakuchikaRecords: state.gakuchikaRecords.map((record) =>
+            record.id === id
+              ? { ...record, ...patch, updatedAt: new Date().toISOString() }
+              : record,
+          ),
+        })),
+      saveGakuchika: (id) =>
+        set((state) => ({
+          gakuchikaRecords: state.gakuchikaRecords.map((record) =>
+            record.id === id
+              ? { ...record, savedAt: new Date().toISOString() }
+              : record,
           ),
         })),
       addEsDraft: (draft) => {
@@ -299,83 +183,21 @@ export const useAppStore = create<AppState>((set) => ({
           id: createId("es"),
           updatedAt: new Date().toISOString(),
         };
-
         set((state) => ({ esDrafts: [record, ...state.esDrafts] }));
-
         return record;
       },
       updateEsDraft: (id, patch) =>
         set((state) => ({
           esDrafts: state.esDrafts.map((draft) =>
             draft.id === id
-              ? {
-                  ...draft,
-                  ...patch,
-                  updatedAt: new Date().toISOString(),
-                }
+              ? { ...draft, ...patch, updatedAt: new Date().toISOString() }
               : draft,
           ),
         })),
     }),
     {
-      name: "gakuchika-log-store",
-      storage: createJSONStorage(() =>
-        typeof globalThis.localStorage === "undefined"
-          ? memoryStorage
-          : globalThis.localStorage,
-      ),
-      merge: (persisted, current) => {
-        const saved = persisted as Partial<AppState>;
-        return {
-          ...current,
-          ...saved,
-          projects: saved.projects ?? current.projects,
-          tags: saved.tags ?? current.tags,
-        };
-      },
+      name: STORAGE_KEY,
+      storage: createJSONStorage(() => AsyncStorage),
     },
   ),
 );
-    })),
-}));
-
-void restorePersistedState().then((value) => {
-  if (!value) return;
-  try {
-    const saved = JSON.parse(value) as Partial<AppState>;
-    const savedProjects = saved.projects ?? MOCK_PROJECTS;
-    const migratedActivities = (saved.activities ?? MOCK_ACTIVITIES).map(
-      (activity) => {
-        if (activity.projectId) return activity;
-        const legacyCategory =
-          (activity as ActivityRecord & { categoryKey?: Project["category"] })
-            .categoryKey ?? "study";
-        return { ...activity, projectId: `legacy-${legacyCategory}` };
-      },
-    );
-    const legacyProjects = migratedActivities
-      .filter(
-        (activity) =>
-          !savedProjects.some((project) => project.id === activity.projectId),
-      )
-      .map((activity) => {
-        const legacyCategory =
-          (activity as ActivityRecord & { categoryKey?: Project["category"] })
-            .categoryKey ?? "study";
-        return {
-          id: `legacy-${legacyCategory}`,
-          name: "旧データの活動",
-          category: legacyCategory,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-      });
-    useAppStore.setState({
-      ...saved,
-      projects: [...savedProjects, ...legacyProjects],
-      activities: migratedActivities,
-    });
-  } catch {
-    // Keep bundled initial data when local data is malformed.
-  }
-});

@@ -160,6 +160,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 32,
   },
+  fab: {
+    position: "absolute",
+    right: 24,
+    bottom: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   brandWrap: { flexDirection: "row", alignItems: "center", gap: 10 },
   avatar: {
     width: 42,

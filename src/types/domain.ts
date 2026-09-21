@@ -24,21 +24,12 @@ export type ActivityRecord = {
   title: string;
   body: string;
   categoryKey: ActivityCategoryKey;
-  projectId?: string;
   tagIds: TagId[];
   date: ISODateString;
   photoAsset?: PhotoAsset;
   photoLabel?: string;
   metrics?: string[];
   location?: string;
-  createdAt: ISODateString;
-  updatedAt: ISODateString;
-};
-
-export type Project = {
-  id: string;
-  name: string;
-  categoryKey: ActivityCategoryKey;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 };
