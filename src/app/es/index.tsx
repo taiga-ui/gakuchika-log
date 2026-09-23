@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
@@ -13,11 +12,7 @@ import { useAppStore } from "@/store/use-app-store";
 export default function SearchScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const inputRef = useRef<TextInput>(null);
-  const [query, setQuery] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
   const setSelectedCategory = useAppStore((state) => state.setSelectedCategory);
-  const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const projects = useAppStore((state) => state.projects);
   const categories = useAppStore((state) => state.categories);
 
@@ -49,59 +44,34 @@ export default function SearchScreen() {
         </Pressable>
       </View>
 
-      <ThemedText
-        type="title"
-        style={[styles.pageTitle, { color: theme.text }]}
-      >
-        探す
-      </ThemedText>
-
-      <View style={[styles.searchBar, { backgroundColor: theme.surface }]}>
-        <Ionicons name="search-outline" size={26} color={theme.textTertiary} />
-
+      <View style={styles.searchRow}>
         <Pressable
-          style={styles.searchInputButton}
-          onPress={() => {
-            setIsFocused(true);
-            requestAnimationFrame(() => inputRef.current?.focus());
-          }}
+          style={[styles.searchBar, { backgroundColor: theme.surface }]}
+          onPress={() => router.push("/es/search")}
         >
-          <TextInput
-            ref={inputRef}
-            value={query}
-            onChangeText={(value) => {
-              setQuery(value);
-              setSearchQuery(value);
-            }}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder="キーワード検索"
-            placeholderTextColor={theme.textTertiary}
-            style={[styles.searchInput, { color: theme.text }]}
-            editable
+          <Ionicons
+            name="search-outline"
+            size={26}
+            color={theme.textTertiary}
           />
+          <ThemedText
+            type="default"
+            style={[styles.searchPlaceholder, { color: theme.textTertiary }]}
+          >
+            キーワード検索
+          </ThemedText>
         </Pressable>
 
-        {isFocused ? (
-          <Pressable
-            style={[
-              styles.searchSubmitButton,
-              { backgroundColor: theme.primary },
-            ]}
-          >
-            <Ionicons name="arrow-up" size={24} color={theme.textInverse} />
-          </Pressable>
-        ) : (
-          <Pressable
-            style={[styles.aiButton, { backgroundColor: theme.primarySoft }]}
-            onPress={() => router.push("/es/ai")}
-          >
-            <Ionicons name="sparkles-outline" size={24} color={theme.primary} />
-            <ThemedText type="smallBold" style={{ color: theme.primary }}>
-              AI
-            </ThemedText>
-          </Pressable>
-        )}
+        <Pressable
+          accessibilityLabel="AI検索"
+          style={[styles.aiButton, { backgroundColor: theme.primarySoft }]}
+          onPress={() => router.push("/es/ai")}
+        >
+          <Ionicons name="sparkles-outline" size={24} color={theme.primary} />
+          <ThemedText type="smallBold" style={{ color: theme.primary }}>
+            AI検索
+          </ThemedText>
+        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -116,28 +86,21 @@ export default function SearchScreen() {
           {categories.map((category) => (
             <Pressable
               key={category.key}
-              style={[styles.categoryCard, { backgroundColor: theme.surface }]}
+              style={[
+                styles.categoryCard,
+                {
+                  backgroundColor: category.softColor,
+                  borderColor: category.borderColor,
+                },
+              ]}
               onPress={() => {
                 setSelectedCategory(category.key);
                 router.push("/activities");
               }}
             >
-              <View
-                style={[
-                  styles.categoryIconWrap,
-                  { backgroundColor: category.softColor },
-                ]}
-              >
-                <Ionicons
-                  name={category.icon as keyof typeof Ionicons.glyphMap}
-                  size={28}
-                  color={category.color}
-                />
-              </View>
-
               <ThemedText
                 type="default"
-                style={[styles.categoryTitle, { color: theme.text }]}
+                style={[styles.categoryTitle, { color: category.color }]}
               >
                 {category.label}
               </ThemedText>
@@ -185,13 +148,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  pageTitle: {
-    fontSize: 42,
-    lineHeight: 52,
-    fontWeight: "700",
-    marginBottom: Spacing.three,
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   searchBar: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -202,18 +165,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  searchInputButton: {
+  searchPlaceholder: {
     flex: 1,
-    minHeight: 34,
-    justifyContent: "center",
-  },
-  searchInput: {
     fontSize: 16,
     lineHeight: 24,
-    paddingVertical: 0,
   },
   aiButton: {
-    marginLeft: "auto",
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -221,13 +178,6 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
-  },
-  searchSubmitButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
   },
   section: {
     marginTop: Spacing.five,
@@ -250,14 +200,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.light.border,
     padding: 18,
     marginBottom: 12,
-    gap: 12,
-  },
-  categoryIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
   },
   categoryTitle: {
     fontSize: 18,

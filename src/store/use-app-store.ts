@@ -60,6 +60,18 @@ type AppState = {
 const createId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
+const mergeCategories = (persistedCategories?: CategoryMeta[]) => {
+  const savedCategories = persistedCategories ?? [];
+  const builtInKeys = new Set<string>(
+    ACTIVITY_CATEGORIES.map((category) => category.key),
+  );
+  const customCategories = savedCategories.filter(
+    (category) => !builtInKeys.has(category.key),
+  );
+
+  return [...ACTIVITY_CATEGORIES, ...customCategories];
+};
+
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
@@ -215,6 +227,15 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AppState>;
+
+        return {
+          ...currentState,
+          ...persisted,
+          categories: mergeCategories(persisted.categories),
+        };
+      },
     },
   ),
 );

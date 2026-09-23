@@ -45,12 +45,10 @@ export default function AISearchScreen() {
               <Ionicons name="arrow-back" size={28} color={theme.primary} />
             </Pressable>
 
-            <ThemedText
-              type="smallBold"
-              style={[styles.brandText, { color: theme.primary }]}
-            >
-              ガクチカログ
+            <ThemedText type="smallBold" style={{ color: theme.primary }}>
+              AI検索
             </ThemedText>
+            <View style={styles.topBarSpacer} />
           </View>
 
           <View style={styles.promptWrap}>
@@ -141,12 +139,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  brandText: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 18,
-    lineHeight: 26,
-    marginRight: 42,
+  topBarSpacer: {
+    width: 42,
   },
   promptWrap: {
     marginTop: Spacing.three,
