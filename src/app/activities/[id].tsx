@@ -4,14 +4,10 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PhotoHeader } from "@/components/ui/photo-header";
 import { Screen } from "@/components/ui/screen";
-import { CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
-import { formatJapaneseDate } from "@/utils/date";
-import { GakuchikaCard } from "../../features/gakuchika/components/gakuchika-card";
 
 function SectionBlock({
   title,
@@ -43,7 +39,6 @@ export default function ActivityDetailScreen() {
   const tags = useAppStore((state) => state.tags);
   const projects = useAppStore((state) => state.projects);
   const deleteActivity = useAppStore((state) => state.deleteActivity);
-  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
   const activityId = Array.isArray(params.id) ? params.id[0] : params.id;
   const activity = activities.find((item) => item.id === activityId);
@@ -63,12 +58,6 @@ export default function ActivityDetailScreen() {
   }
 
   const project = projects.find((item) => item.id === activity.projectId);
-  const category = project
-    ? CATEGORY_MAP[project.category]
-    : CATEGORY_MAP.study;
-  const relatedGakuchika = gakuchikaRecords.find((item) =>
-    item.relatedActivityIds.includes(activity.id),
-  );
 
   return (
     <Screen>
@@ -97,39 +86,33 @@ export default function ActivityDetailScreen() {
         </Pressable>
       </View>
 
-      <PhotoHeader
-        photoAsset={activity.photoAsset}
-        photoLabel={activity.photoLabel}
-        categoryKey={project?.category ?? "study"}
-        title={activity.title}
-        subtitle={activity.body}
-      />
+      <SectionBlock title="タイトル">
+        <ThemedText style={{ color: theme.text }}>{activity.title}</ThemedText>
+      </SectionBlock>
 
-      <SectionBlock title="活動概要">
+      <SectionBlock title="内容">
         <ThemedText
           type="default"
           style={{ color: theme.textSecondary, lineHeight: 24 }}
         >
           {activity.body}
         </ThemedText>
-        <View style={styles.metaRow}>
-          <View
-            style={[
-              styles.categoryPill,
-              {
-                backgroundColor: category.softColor,
-                borderColor: category.borderColor,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold" style={{ color: category.color }}>
-              {project?.name ?? category.label}
-            </ThemedText>
-          </View>
-          <ThemedText type="small" style={{ color: theme.textTertiary }}>
-            {formatJapaneseDate(activity.date)}
-          </ThemedText>
-        </View>
+      </SectionBlock>
+
+      <SectionBlock title="日付">
+        <ThemedText style={{ color: theme.text }}>{activity.date}</ThemedText>
+      </SectionBlock>
+
+      <SectionBlock title="場所">
+        <ThemedText style={{ color: theme.text }}>
+          {activity.location || "未入力"}
+        </ThemedText>
+      </SectionBlock>
+
+      <SectionBlock title="プロジェクト">
+        <ThemedText style={{ color: theme.text }}>
+          {project?.name || "未入力"}
+        </ThemedText>
       </SectionBlock>
 
       <SectionBlock title="タグ">
@@ -153,59 +136,19 @@ export default function ActivityDetailScreen() {
         </View>
       </SectionBlock>
 
-      <SectionBlock title="数字・成果">
-        <View style={styles.metricColumn}>
-          {activity.metrics?.length ? (
-            activity.metrics.map((metric) => (
-              <View
-                key={metric}
-                style={[
-                  styles.metricCard,
-                  { backgroundColor: theme.surfaceMuted },
-                ]}
-              >
-                <ThemedText type="smallBold" style={{ color: theme.text }}>
-                  {metric}
-                </ThemedText>
-              </View>
-            ))
-          ) : (
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              数字はあとから足せる。まずは記録を残すことを優先する。
-            </ThemedText>
-          )}
-        </View>
-      </SectionBlock>
-
-      <SectionBlock title="写真・成果物">
-        <ThemedText
-          type="small"
-          style={{ color: theme.textSecondary, lineHeight: 22 }}
-        >
-          {activity.photoAsset
-            ? "写真付きで記録されているため、当時の状況を思い出しやすい。"
-            : "写真がない場合でも、カテゴリ色とアイコンで記録を見分けられる。"}
+      <Pressable
+        style={[styles.editButton, { backgroundColor: theme.primary }]}
+        onPress={() =>
+          router.push({
+            pathname: "/activities/new",
+            params: { activityId: activity.id },
+          } as never)
+        }
+      >
+        <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
+          編集
         </ThemedText>
-      </SectionBlock>
-
-      {relatedGakuchika ? (
-        <>
-          <ThemedText
-            type="smallBold"
-            style={{
-              color: theme.text,
-              marginTop: Spacing.three,
-              marginBottom: Spacing.two,
-            }}
-          >
-            関連ガクチカ
-          </ThemedText>
-          <GakuchikaCard
-            item={relatedGakuchika}
-            onPress={() => router.push(`/gakuchika/${relatedGakuchika.id}`)}
-          />
-        </>
-      ) : null}
+      </Pressable>
     </Screen>
   );
 }
@@ -237,18 +180,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
   },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  categoryPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
   tagRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -259,11 +190,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  metricColumn: {
-    gap: 8,
-  },
-  metricCard: {
+  editButton: {
+    alignItems: "center",
     borderRadius: 18,
-    padding: Spacing.four,
+    paddingVertical: 16,
+    marginTop: Spacing.five,
+    marginBottom: Spacing.six,
   },
 });
