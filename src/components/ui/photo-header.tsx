@@ -4,9 +4,10 @@ import { StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import type { ActivityCategoryKey } from "@/constants/categories";
-import { CATEGORY_MAP } from "@/constants/categories";
+import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { useAppStore } from "@/store/use-app-store";
 import type { PhotoAsset } from "@/types/domain";
 
 type PhotoHeaderProps = {
@@ -25,7 +26,11 @@ export function PhotoHeader({
   subtitle,
 }: PhotoHeaderProps) {
   const theme = useTheme();
-  const category = CATEGORY_MAP[categoryKey];
+  const categories = useAppStore((state) => state.categories);
+  const category =
+    categories.find((item) => item.key === categoryKey) ??
+    CATEGORY_MAP[categoryKey] ??
+    ACTIVITY_CATEGORIES[0];
 
   if (photoAsset) {
     return (

@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
-import { CATEGORY_MAP } from "@/constants/categories";
+import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -19,6 +19,7 @@ export default function ProjectDetailScreen() {
     state.projects.find((item) => item.id === id),
   );
   const allActivities = useAppStore((state) => state.activities);
+  const categories = useAppStore((state) => state.categories);
   const activities = useMemo(
     () =>
       allActivities
@@ -39,7 +40,10 @@ export default function ProjectDetailScreen() {
         />
       </Screen>
     );
-  const category = CATEGORY_MAP[project.category];
+  const category =
+    categories.find((item) => item.key === project.category) ??
+    CATEGORY_MAP[project.category] ??
+    ACTIVITY_CATEGORIES[0];
   return (
     <Screen>
       <View style={styles.header}>

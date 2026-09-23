@@ -5,10 +5,7 @@ import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import {
-  ACTIVITY_CATEGORIES,
-  type ActivityCategoryKey,
-} from "@/constants/categories";
+import { type ActivityCategoryKey } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -22,6 +19,7 @@ export default function SearchScreen() {
   const setSelectedCategory = useAppStore((state) => state.setSelectedCategory);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const projects = useAppStore((state) => state.projects);
+  const categories = useAppStore((state) => state.categories);
 
   const getCountLabel = (key: ActivityCategoryKey) =>
     `${projects.filter((project) => project.category === key).length}個のプロジェクト`;
@@ -115,7 +113,7 @@ export default function SearchScreen() {
         </ThemedText>
 
         <View style={styles.categoryGrid}>
-          {ACTIVITY_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Pressable
               key={category.key}
               style={[styles.categoryCard, { backgroundColor: theme.surface }]}

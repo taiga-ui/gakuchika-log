@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { ACTIVITY_CATEGORIES, type CategoryMeta } from "@/constants/categories";
 import {
   MOCK_ACTIVITIES,
   MOCK_ES_DRAFTS,
@@ -27,6 +28,7 @@ type AppState = {
   profile: ProfileSummary;
   activities: ActivityRecord[];
   projects: Project[];
+  categories: CategoryMeta[];
   tags: TagMeta[];
   lastCreatedProjectId?: string;
   gakuchikaRecords: GakuchikaRecord[];
@@ -38,6 +40,7 @@ type AppState = {
   updateProfile: (patch: Partial<ProfileSummary>) => void;
   addActivity: (draft: ActivityDraft) => ActivityRecord;
   addProject: (name: string, category: Project["category"]) => Project;
+  addCategory: (label: string) => CategoryMeta;
   addTag: (label: string) => TagMeta;
   clearLastCreatedProject: () => void;
   updateActivity: (id: string, patch: Partial<ActivityRecord>) => void;
@@ -63,6 +66,7 @@ export const useAppStore = create<AppState>()(
       profile: PROFILE,
       activities: MOCK_ACTIVITIES,
       projects: MOCK_PROJECTS,
+      categories: [...ACTIVITY_CATEGORIES],
       tags: [...TAGS],
       gakuchikaRecords: MOCK_GAKUCHIKA,
       esDrafts: MOCK_ES_DRAFTS,
@@ -110,6 +114,19 @@ export const useAppStore = create<AppState>()(
           lastCreatedProjectId: project.id,
         }));
         return project;
+      },
+      addCategory: (label) => {
+        const category: CategoryMeta = {
+          key: createId("category"),
+          label,
+          icon: "folder-outline",
+          color: "#475569",
+          softColor: "#EAEFF7",
+          borderColor: "#CBD5E1",
+          description: "ユーザーが追加したカテゴリ",
+        };
+        set((state) => ({ categories: [...state.categories, category] }));
+        return category;
       },
       updateProject: (id, patch) =>
         set((state) => ({

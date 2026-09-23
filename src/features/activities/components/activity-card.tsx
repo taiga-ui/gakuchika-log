@@ -4,7 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { PhotoHeader } from "@/components/ui/photo-header";
 import { TagChip } from "@/components/ui/tag-chip";
 import type { ActivityCategoryKey } from "@/constants/categories";
-import { CATEGORY_MAP } from "@/constants/categories";
+import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -24,7 +24,12 @@ export function ActivityCard({
 }: ActivityCardProps) {
   const theme = useTheme();
   const tags = useAppStore((state) => state.tags);
-  const category = CATEGORY_MAP[categoryKey ?? activity.categoryKey];
+  const categories = useAppStore((state) => state.categories);
+  const categoryKeyToDisplay = categoryKey ?? activity.categoryKey;
+  const category =
+    categories.find((item) => item.key === categoryKeyToDisplay) ??
+    CATEGORY_MAP[categoryKeyToDisplay] ??
+    ACTIVITY_CATEGORIES[0];
 
   return (
     <Pressable
@@ -38,7 +43,7 @@ export function ActivityCard({
       <PhotoHeader
         photoAsset={activity.photoAsset}
         photoLabel={activity.photoLabel}
-        categoryKey={categoryKey ?? "study"}
+        categoryKey={categoryKeyToDisplay}
         title={activity.title}
         subtitle={activity.body}
       />
