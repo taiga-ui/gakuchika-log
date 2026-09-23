@@ -15,6 +15,7 @@ export default function ActivitiesScreen() {
   const router = useRouter();
   const theme = useTheme();
   const projects = useAppStore((state) => state.projects);
+  const categories = useAppStore((state) => state.categories);
   const activities = useAppStore((state) => state.activities);
   const selectedCategory = useAppStore((state) => state.selectedCategory);
   const setSelectedCategory = useAppStore((state) => state.setSelectedCategory);
@@ -73,7 +74,7 @@ export default function ActivitiesScreen() {
               >
                 {[
                   { label: "すべて", value: "all" },
-                  ...ACTIVITY_CATEGORIES.map((category) => ({
+                  ...categories.map((category) => ({
                     label: category.label,
                     value: category.key,
                   })),
@@ -124,7 +125,12 @@ export default function ActivitiesScreen() {
               {visibleProjects.length ? (
                 <View style={styles.list}>
                   {visibleProjects.map((project) => {
-                    const category = CATEGORY_MAP[project.category];
+                    const category =
+                      categories.find(
+                        (item) => item.key === project.category,
+                      ) ??
+                      CATEGORY_MAP[project.category] ??
+                      ACTIVITY_CATEGORIES[0];
                     const count = activities.filter(
                       (activity) => activity.projectId === project.id,
                     ).length;

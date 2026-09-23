@@ -1,15 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 
-export type ActivityCategoryKey =
-  | "research"
-  | "study"
-  | "club"
-  | "internship"
-  | "part-time"
-  | "development"
-  | "volunteer"
-  | "competition";
+export type ActivityCategoryKey = string;
 
 export type CategoryMeta = {
   key: ActivityCategoryKey;
@@ -100,4 +92,4 @@ export const ALL_CATEGORY_KEY = "all" as const;
 
 export const CATEGORY_MAP = Object.fromEntries(
   ACTIVITY_CATEGORIES.map((category) => [category.key, category]),
-) as Record<ActivityCategoryKey, CategoryMeta>;
+) as Record<string, CategoryMeta>;
