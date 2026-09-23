@@ -1,10 +1,3 @@
-import type { ActivityRecord } from "@/types/domain";
-
-export type ContributionCell = {
-  date: string;
-  count: number;
-};
-
 const pad = (value: number) => value.toString().padStart(2, "0");
 
 export function toIsoDate(date: Date) {
@@ -46,68 +39,4 @@ export function formatRelativeDate(dateValue: string) {
   }
 
   return formatJapaneseDate(dateValue);
-}
-
-export function countRecordsThisMonth(records: ActivityRecord[]) {
-  const now = new Date();
-  return records.filter((record) => {
-    const date = parseIsoDate(record.date);
-    return (
-      date.getFullYear() === now.getFullYear() &&
-      date.getMonth() === now.getMonth()
-    );
-  }).length;
-}
-
-export function calculateStreak(records: ActivityRecord[]) {
-  const dates = new Set(records.map((record) => record.date));
-  const current = new Date();
-  let streak = 0;
-
-  for (;;) {
-    const isoDate = toIsoDate(current);
-    if (!dates.has(isoDate)) {
-      break;
-    }
-
-    streak += 1;
-    current.setDate(current.getDate() - 1);
-  }
-
-  return streak;
-}
-
-export function buildContributionGrid(
-  records: ActivityRecord[],
-  weekCount = 6,
-) {
-  const recordMap = new Map<string, number>();
-
-  records.forEach((record) => {
-    recordMap.set(record.date, (recordMap.get(record.date) ?? 0) + 1);
-  });
-
-  const today = new Date();
-  const start = new Date(today);
-  start.setDate(today.getDate() - weekCount * 7 + 1);
-
-  const cells: ContributionCell[] = [];
-
-  for (let index = 0; index < weekCount * 7; index += 1) {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
-    const isoDate = toIsoDate(date);
-    cells.push({ date: isoDate, count: recordMap.get(isoDate) ?? 0 });
-  }
-
-  return cells;
-}
-
-export function getActivityMonthLabel(records: ActivityRecord[]) {
-  const firstRecord = [...records].sort((left, right) =>
-    right.date.localeCompare(left.date),
-  )[0];
-  return firstRecord
-    ? formatMonthLabel(firstRecord.date)
-    : formatMonthLabel(toIsoDate(new Date()));
 }

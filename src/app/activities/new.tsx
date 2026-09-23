@@ -36,27 +36,38 @@ function getCalendarDays(month: Date) {
 export default function NewActivityScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { projectId: initialProjectId } = useLocalSearchParams<{
+  const { activityId, projectId: initialProjectId } = useLocalSearchParams<{
+    activityId?: string;
     projectId?: string;
   }>();
   const projects = useAppStore((state) => state.projects);
   const tags = useAppStore((state) => state.tags);
+  const activityToEdit = useAppStore((state) =>
+    state.activities.find((activity) => activity.id === activityId),
+  );
   const lastCreatedProjectId = useAppStore(
     (state) => state.lastCreatedProjectId,
   );
   const addActivity = useAppStore((state) => state.addActivity);
+  const updateActivity = useAppStore((state) => state.updateActivity);
   const addTag = useAppStore((state) => state.addTag);
   const clearLastCreatedProject = useAppStore(
     (state) => state.clearLastCreatedProject,
   );
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [date, setDate] = useState(toIsoDate(new Date()));
-  const [location, setLocation] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState(
-    initialProjectId ?? projects[0]?.id ?? "",
+  const [title, setTitle] = useState(() => activityToEdit?.title ?? "");
+  const [body, setBody] = useState(() => activityToEdit?.body ?? "");
+  const [date, setDate] = useState(
+    () => activityToEdit?.date ?? toIsoDate(new Date()),
   );
-  const [selectedTagIds, setSelectedTagIds] = useState<TagId[]>(["analysis"]);
+  const [location, setLocation] = useState(
+    () => activityToEdit?.location ?? "",
+  );
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    initialProjectId ?? activityToEdit?.projectId ?? projects[0]?.id ?? "",
+  );
+  const [selectedTagIds, setSelectedTagIds] = useState<TagId[]>(
+    () => activityToEdit?.tagIds ?? ["analysis"],
+  );
   const [newTagName, setNewTagName] = useState("");
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
@@ -137,6 +148,19 @@ export default function NewActivityScreen() {
   const handleSave = () => {
     const project = projects.find((item) => item.id === selectedProjectId);
     if (!title.trim() || !body.trim() || !project) return;
+    if (activityToEdit) {
+      updateActivity(activityToEdit.id, {
+        title: title.trim(),
+        body: body.trim(),
+        date,
+        location: location.trim() || undefined,
+        categoryKey: project.category,
+        projectId: project.id,
+        tagIds: selectedTagIds.length ? selectedTagIds : ["analysis"],
+      });
+      router.replace(`/activities/${activityToEdit.id}`);
+      return;
+    }
     const created = addActivity({
       title: title.trim(),
       body: body.trim(),
@@ -161,7 +185,7 @@ export default function NewActivityScreen() {
           type="smallBold"
           style={{ color: theme.primary, marginTop: 10 }}
         >
-          新規記録
+          {activityToEdit ? "活動を編集" : "新規記録"}
         </ThemedText>
       </View>
 
@@ -472,7 +496,7 @@ export default function NewActivityScreen() {
         disabled={!canSave}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
-          保存
+          {activityToEdit ? "更新" : "保存"}
         </ThemedText>
       </Pressable>
     </Screen>
