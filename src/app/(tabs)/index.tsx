@@ -4,29 +4,19 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
+import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
+import { formatJapaneseDate } from "@/utils/date";
 
 export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
   const activities = useAppStore((state) => state.activities);
-  const projects = useAppStore((state) => state.projects);
+  const categories = useAppStore((state) => state.categories);
 
   const recentActivities = activities.slice(0, 3);
-  const recentRecords = recentActivities.map((activity, index) => ({
-    category:
-      projects.find((project) => project.id === activity.projectId)?.category ??
-      "study",
-    title: activity.title,
-    body: activity.body,
-    icon: (index === 0
-      ? "sparkles"
-      : index === 1
-        ? "rocket"
-        : "briefcase") as keyof typeof Ionicons.glyphMap,
-  }));
 
   return (
     <Screen>
@@ -86,44 +76,52 @@ export default function HomeScreen() {
           最近の記録
         </ThemedText>
 
-        {recentRecords.map((item, index) => (
-          <Pressable
-            key={`${item.category}-${index}`}
-            style={[styles.recordCard, { backgroundColor: theme.surface }]}
-            onPress={() => router.push("/activities")}
-          >
-            <View style={styles.recordHeader}>
-              <View
-                style={[
-                  styles.categoryBadge,
-                  { backgroundColor: theme.surfaceMuted },
-                ]}
-              >
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  {item.category}
+        {recentActivities.map((activity) => {
+          const category =
+            categories.find((item) => item.key === activity.categoryKey) ??
+            CATEGORY_MAP[activity.categoryKey] ??
+            ACTIVITY_CATEGORIES[0];
+
+          return (
+            <Pressable
+              key={activity.id}
+              style={[styles.recordCard, { backgroundColor: theme.surface }]}
+              onPress={() => router.push(`/activities/${activity.id}` as never)}
+            >
+              <View style={styles.recordHeader}>
+                <View
+                  style={[
+                    styles.categoryBadge,
+                    { backgroundColor: theme.surfaceMuted },
+                  ]}
+                >
+                  <ThemedText
+                    type="small"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    {category.label}
+                  </ThemedText>
+                </View>
+                <ThemedText type="small" style={{ color: theme.textTertiary }}>
+                  {formatJapaneseDate(activity.date)}
                 </ThemedText>
               </View>
-              <Ionicons
-                name={item.icon as any}
-                size={26}
-                color={theme.textTertiary}
-              />
-            </View>
 
-            <ThemedText
-              type="subtitle"
-              style={[styles.recordTitle, { color: theme.text }]}
-            >
-              {item.title}
-            </ThemedText>
-            <ThemedText
-              type="default"
-              style={[styles.recordBody, { color: theme.textSecondary }]}
-            >
-              {item.body}
-            </ThemedText>
-          </Pressable>
-        ))}
+              <ThemedText
+                type="subtitle"
+                style={[styles.recordTitle, { color: theme.text }]}
+              >
+                {activity.title}
+              </ThemedText>
+              <ThemedText
+                type="default"
+                style={[styles.recordBody, { color: theme.textSecondary }]}
+              >
+                {activity.body}
+              </ThemedText>
+            </Pressable>
+          );
+        })}
       </View>
     </Screen>
   );
