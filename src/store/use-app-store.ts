@@ -229,10 +229,27 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => AsyncStorage),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<AppState>;
+        const persistedProfile = persisted.profile;
+        const isSeedProfile =
+          /^山田[ \u3000]太郎$/.test(persistedProfile?.name ?? "") &&
+          persistedProfile?.school === "Gakuchika University";
 
         return {
           ...currentState,
           ...persisted,
+          profile: isSeedProfile
+            ? currentState.profile
+            : persistedProfile
+              ? {
+                  ...currentState.profile,
+                  ...persistedProfile,
+                  target:
+                    typeof persistedProfile.target === "string"
+                      ? [persistedProfile.target]
+                      : (persistedProfile.target ??
+                        currentState.profile.target),
+                }
+              : currentState.profile,
           categories: mergeCategories(persisted.categories),
         };
       },

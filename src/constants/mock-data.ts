@@ -7,11 +7,11 @@ import type {
 } from "@/types/domain";
 
 export const PROFILE: ProfileSummary = {
-  name: "山田 太郎",
-  school: "Gakuchika University",
-  faculty: "経営学部",
-  grade: "3年",
-  target: "IT・SaaS業界",
+  name: "",
+  school: "",
+  faculty: "",
+  grade: "",
+  target: [],
 };
 
 export const MOCK_PROJECTS: Project[] = [
