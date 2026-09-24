@@ -38,7 +38,7 @@ export default function ProfileScreen() {
             {profile.school} / {profile.faculty}
           </ThemedText>
           <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {profile.grade} / {profile.target}
+            {profile.grade} / {profile.target.join("、")}
           </ThemedText>
         </View>
       </View>

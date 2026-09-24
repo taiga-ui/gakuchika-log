@@ -84,5 +84,5 @@ export type ProfileSummary = {
   school: string;
   faculty: string;
   grade: string;
-  target: string;
+  target: string[];
 };

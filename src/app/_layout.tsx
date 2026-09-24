@@ -25,6 +25,7 @@ export default function RootLayout() {
           <Stack.Screen name="es/index" />
           <Stack.Screen name="settings/index" />
           <Stack.Screen name="settings/profile" />
+          <Stack.Screen name="settings/profile/[field]" />
           <Stack.Screen name="settings/notifications" />
           <Stack.Screen name="settings/export" />
           <Stack.Screen name="settings/help" />
