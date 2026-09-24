@@ -143,7 +143,7 @@ export default function GakuchikaDetailScreen() {
           </Pressable>
           <View style={{ flex: 1 }}>
             <ThemedText style={[styles.headerTitle, { color: theme.primary }]}>
-              Gakuchika Log
+              ガクチカログ
             </ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               経験を深掘りして、自分の言葉にする
@@ -162,16 +162,33 @@ export default function GakuchikaDetailScreen() {
               record.relatedActivityIds.includes(activity.id),
             )
             .map((activity) => (
-              <View key={activity.id} style={styles.relatedActivity}>
-                <ThemedText
-                  style={[styles.relatedActivityTitle, { color: theme.text }]}
-                >
-                  {activity.title}
-                </ThemedText>
-                <ThemedText style={{ color: theme.textSecondary }}>
-                  {activity.body}
-                </ThemedText>
-              </View>
+              <Pressable
+                key={activity.id}
+                onPress={() =>
+                  router.push(`/activities/${activity.id}` as never)
+                }
+                style={({ pressed }) => [
+                  styles.relatedActivity,
+                  { backgroundColor: theme.surfaceMuted },
+                  pressed && styles.relatedActivityPressed,
+                ]}
+              >
+                <View style={styles.relatedActivityContent}>
+                  <ThemedText
+                    style={[styles.relatedActivityTitle, { color: theme.text }]}
+                  >
+                    {activity.title}
+                  </ThemedText>
+                  <ThemedText style={{ color: theme.textSecondary }}>
+                    {activity.body}
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={theme.textTertiary}
+                />
+              </Pressable>
             ))}
         </View>
 
@@ -314,7 +331,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.light.border,
   },
-  relatedActivity: { gap: 4, paddingTop: 4 },
+  relatedActivity: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    borderRadius: 12,
+  },
+  relatedActivityContent: { flex: 1, gap: 4 },
+  relatedActivityPressed: { opacity: 0.7 },
   relatedActivityTitle: { fontSize: 15, fontWeight: "700" },
   sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 4 },
   sectionHeading: {
