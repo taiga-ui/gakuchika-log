@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, MaxContentWidth, Spacing } from "@/constants/theme";
@@ -19,6 +20,9 @@ export default function ActivitiesScreen() {
   const activities = useAppStore((state) => state.activities);
   const selectedCategory = useAppStore((state) => state.selectedCategory);
   const setSelectedCategory = useAppStore((state) => state.setSelectedCategory);
+  const addCategory = useAppStore((state) => state.addCategory);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
 
   const visibleProjects = useMemo(() => {
     return projects
@@ -28,6 +32,15 @@ export default function ActivitiesScreen() {
       )
       .sort((left, right) => left.name.localeCompare(right.name, "ja"));
   }, [projects, selectedCategory]);
+
+  const handleAddCategory = () => {
+    const label = newCategoryName.trim();
+    if (!label) return;
+    const addedCategory = addCategory(label);
+    setSelectedCategory(addedCategory.key);
+    setNewCategoryName("");
+    setIsCategoryModalVisible(false);
+  };
 
   return (
     <Screen scroll={false}>
@@ -109,6 +122,19 @@ export default function ActivitiesScreen() {
                     </ThemedText>
                   </Pressable>
                 ))}
+                <Pressable
+                  accessibilityLabel="カテゴリーを追加"
+                  onPress={() => setIsCategoryModalVisible(true)}
+                  style={[
+                    styles.addCategoryChip,
+                    {
+                      backgroundColor: theme.surfaceMuted,
+                      borderColor: Colors.light.border,
+                    },
+                  ]}
+                >
+                  <Ionicons name="add" size={20} color={theme.textSecondary} />
+                </Pressable>
               </ScrollView>
               <Pressable
                 style={[
@@ -201,6 +227,63 @@ export default function ActivitiesScreen() {
             </>
           </View>
         </ScrollView>
+        <Modal
+          visible={isCategoryModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsCategoryModalVisible(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[styles.modalCard, { backgroundColor: theme.surface }]}
+            >
+              <ThemedText type="subtitle" style={{ color: theme.text }}>
+                カテゴリーを追加
+              </ThemedText>
+              <FormField
+                label="カテゴリー名"
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+                placeholder="例: 学外活動"
+              />
+              <View style={styles.modalActions}>
+                <Pressable
+                  onPress={() => {
+                    setNewCategoryName("");
+                    setIsCategoryModalVisible(false);
+                  }}
+                  style={styles.modalAction}
+                >
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: theme.textSecondary }}
+                  >
+                    キャンセル
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={handleAddCategory}
+                  disabled={!newCategoryName.trim()}
+                  style={[
+                    styles.modalAction,
+                    styles.modalPrimaryAction,
+                    {
+                      backgroundColor: theme.primary,
+                      opacity: newCategoryName.trim() ? 1 : 0.5,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: theme.textInverse }}
+                  >
+                    追加
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
         <Pressable
           style={[styles.fab, { backgroundColor: theme.primary }]}
           onPress={() => router.push("/activities/new")}
@@ -252,6 +335,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  addCategoryChip: {
+    width: 44,
+    height: 42,
+    borderWidth: 1,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   addProjectButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -286,5 +377,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    padding: Spacing.five,
+    backgroundColor: "rgba(22, 32, 51, 0.35)",
+  },
+  modalCard: {
+    borderRadius: 22,
+    padding: Spacing.five,
+    gap: Spacing.four,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  modalAction: {
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  modalPrimaryAction: {
+    minWidth: 72,
+    alignItems: "center",
   },
 });
