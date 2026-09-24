@@ -40,7 +40,7 @@ export default function NewGakuchikaScreen() {
           <Ionicons name="arrow-back" size={28} color={theme.text} />
         </Pressable>
         <ThemedText style={[styles.headerTitle, { color: theme.primary }]}>
-          Gakuchika Log
+          ガクチカログ
         </ThemedText>
       </View>
       <ThemedText type="title" style={[styles.title, { color: theme.text }]}>

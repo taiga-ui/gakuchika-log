@@ -142,13 +142,6 @@ export default function GakuchikaScreen() {
           ))
         )}
       </View>
-
-      <Pressable
-        style={[styles.fab, { backgroundColor: "#0B7A57" }]}
-        onPress={() => router.push("/projects/new")}
-      >
-        <Ionicons name="add" size={32} color="#FFFFFF" />
-      </Pressable>
     </Screen>
   );
 }
@@ -159,16 +152,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 32,
-  },
-  fab: {
-    position: "absolute",
-    right: 24,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: "center",
-    justifyContent: "center",
   },
   brandWrap: { flexDirection: "row", alignItems: "center", gap: 10 },
   avatar: {
