@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 
@@ -15,18 +15,46 @@ import { useAppStore } from "@/store/use-app-store";
 export default function NewProjectScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { projectId } = useLocalSearchParams<{ projectId?: string }>();
+  const projectToEdit = useAppStore((state) =>
+    state.projects.find((project) => project.id === projectId),
+  );
   const addProject = useAppStore((state) => state.addProject);
+  const updateProject = useAppStore((state) => state.updateProject);
   const categories = useAppStore((state) => state.categories);
   const addCategory = useAppStore((state) => state.addCategory);
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<ActivityCategoryKey>("research");
+  const [name, setName] = useState(() => projectToEdit?.name ?? "");
+  const [description, setDescription] = useState(
+    () => projectToEdit?.description ?? "",
+  );
+  const [startDate, setStartDate] = useState(
+    () => projectToEdit?.startDate ?? "",
+  );
+  const [endDate, setEndDate] = useState(() => projectToEdit?.endDate ?? "");
+  const [category, setCategory] = useState<ActivityCategoryKey>(
+    () => projectToEdit?.category ?? "research",
+  );
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
 
   const handleSave = () => {
     const trimmedName = name.trim();
     if (!trimmedName) return;
-    addProject(trimmedName, category);
+    const details = {
+      description: description.trim() || undefined,
+      startDate: startDate.trim() || undefined,
+      endDate: endDate.trim() || undefined,
+    };
+    if (projectToEdit) {
+      updateProject(projectToEdit.id, {
+        name: trimmedName,
+        category,
+        ...details,
+      });
+      router.replace(`/projects/${projectToEdit.id}` as never);
+      return;
+    }
+    addProject(trimmedName, category, details);
     router.back();
   };
 
@@ -49,7 +77,7 @@ export default function NewProjectScreen() {
           type="smallBold"
           style={{ color: theme.primary, marginTop: 10 }}
         >
-          プロジェクトを追加
+          {projectToEdit ? "プロジェクトを編集" : "プロジェクトを追加"}
         </ThemedText>
       </View>
 
@@ -59,6 +87,26 @@ export default function NewProjectScreen() {
           value={name}
           onChangeText={setName}
           placeholder="例: 学園祭企画"
+        />
+        <FormField
+          label="説明（任意）"
+          value={description}
+          onChangeText={setDescription}
+          placeholder="プロジェクトの目的や概要"
+          multiline
+          numberOfLines={4}
+        />
+        <FormField
+          label="開始日（任意）"
+          value={startDate}
+          onChangeText={setStartDate}
+          placeholder="例: 2026-04-01"
+        />
+        <FormField
+          label="終了日（任意）"
+          value={endDate}
+          onChangeText={setEndDate}
+          placeholder="例: 2026-09-30"
         />
       </View>
 

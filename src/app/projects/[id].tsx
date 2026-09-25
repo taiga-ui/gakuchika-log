@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -40,6 +40,23 @@ export default function ProjectDetailScreen() {
         />
       </Screen>
     );
+  const handleDelete = () => {
+    Alert.alert(
+      "プロジェクトを削除しますか？",
+      `このプロジェクトに含まれる活動記録${activities.length ? `（${activities.length}件）` : ""}も削除されます。`,
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "削除",
+          style: "destructive",
+          onPress: () => {
+            deleteProject(project.id);
+            router.replace("/(tabs)/activities" as never);
+          },
+        },
+      ],
+    );
+  };
   const category =
     categories.find((item) => item.key === project.category) ??
     CATEGORY_MAP[project.category] ??
@@ -59,10 +76,23 @@ export default function ProjectDetailScreen() {
           </ThemedText>
         </View>
         <Pressable
-          onPress={() => {
-            deleteProject(project.id);
-            router.back();
-          }}
+          accessibilityLabel="プロジェクトを編集"
+          onPress={() =>
+            router.push({
+              pathname: "/projects/new",
+              params: { projectId: project.id },
+            })
+          }
+        >
+          <Ionicons
+            name="create-outline"
+            size={22}
+            color={theme.textTertiary}
+          />
+        </Pressable>
+        <Pressable
+          accessibilityLabel="プロジェクトを削除"
+          onPress={handleDelete}
         >
           <Ionicons name="trash-outline" size={22} color={theme.textTertiary} />
         </Pressable>
@@ -73,6 +103,12 @@ export default function ProjectDetailScreen() {
       {project.description ? (
         <ThemedText style={{ color: theme.textSecondary, marginTop: 8 }}>
           {project.description}
+        </ThemedText>
+      ) : null}
+      {project.startDate || project.endDate ? (
+        <ThemedText style={{ color: theme.textTertiary, marginTop: 8 }}>
+          {project.startDate ?? "開始日未設定"} -{" "}
+          {project.endDate ?? "終了日未設定"}
         </ThemedText>
       ) : null}
       <Pressable
