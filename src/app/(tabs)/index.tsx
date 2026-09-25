@@ -14,6 +14,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
   const activities = useAppStore((state) => state.activities);
+  const projects = useAppStore((state) => state.projects);
   const categories = useAppStore((state) => state.categories);
 
   const recentActivities = activities.slice(0, 3);
@@ -77,9 +78,12 @@ export default function HomeScreen() {
         </ThemedText>
 
         {recentActivities.map((activity) => {
+          const categoryKey =
+            projects.find((project) => project.id === activity.projectId)
+              ?.category ?? activity.categoryKey;
           const category =
-            categories.find((item) => item.key === activity.categoryKey) ??
-            CATEGORY_MAP[activity.categoryKey] ??
+            categories.find((item) => item.key === categoryKey) ??
+            CATEGORY_MAP[categoryKey] ??
             ACTIVITY_CATEGORIES[0];
 
           return (

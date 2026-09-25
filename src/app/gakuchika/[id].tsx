@@ -102,6 +102,9 @@ export default function GakuchikaDetailScreen() {
     setReflection(nextReflection);
     updateGakuchika(record.id, { reflection: nextReflection });
   };
+  const relatedActivities = activities.filter((activity) =>
+    record.relatedActivityIds.includes(activity.id),
+  );
   const saveEs = (patch: Partial<NonNullable<typeof record.es>>) => {
     const next = {
       company,
@@ -155,41 +158,35 @@ export default function GakuchikaDetailScreen() {
         </ThemedText>
         <View style={[styles.related, { backgroundColor: theme.surface }]}>
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
-            関連する活動記録（{record.relatedActivityIds.length}件）
+            関連する活動記録（{relatedActivities.length}件）
           </ThemedText>
-          {activities
-            .filter((activity) =>
-              record.relatedActivityIds.includes(activity.id),
-            )
-            .map((activity) => (
-              <Pressable
-                key={activity.id}
-                onPress={() =>
-                  router.push(`/activities/${activity.id}` as never)
-                }
-                style={({ pressed }) => [
-                  styles.relatedActivity,
-                  { backgroundColor: theme.surfaceMuted },
-                  pressed && styles.relatedActivityPressed,
-                ]}
-              >
-                <View style={styles.relatedActivityContent}>
-                  <ThemedText
-                    style={[styles.relatedActivityTitle, { color: theme.text }]}
-                  >
-                    {activity.title}
-                  </ThemedText>
-                  <ThemedText style={{ color: theme.textSecondary }}>
-                    {activity.body}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={theme.textTertiary}
-                />
-              </Pressable>
-            ))}
+          {relatedActivities.map((activity) => (
+            <Pressable
+              key={activity.id}
+              onPress={() => router.push(`/activities/${activity.id}` as never)}
+              style={({ pressed }) => [
+                styles.relatedActivity,
+                { backgroundColor: theme.surfaceMuted },
+                pressed && styles.relatedActivityPressed,
+              ]}
+            >
+              <View style={styles.relatedActivityContent}>
+                <ThemedText
+                  style={[styles.relatedActivityTitle, { color: theme.text }]}
+                >
+                  {activity.title}
+                </ThemedText>
+                <ThemedText style={{ color: theme.textSecondary }}>
+                  {activity.body}
+                </ThemedText>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.textTertiary}
+              />
+            </Pressable>
+          ))}
         </View>
 
         <ThemedText style={[styles.sectionHeading, { color: theme.text }]}>

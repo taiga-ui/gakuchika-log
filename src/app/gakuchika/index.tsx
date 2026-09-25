@@ -13,6 +13,7 @@ export default function GakuchikaScreen() {
   const router = useRouter();
   const theme = useTheme();
   const records = useAppStore((state) => state.gakuchikaRecords);
+  const activities = useAppStore((state) => state.activities);
   const [activeList, setActiveList] = useState<"draft" | "saved">("draft");
   const visibleRecords = records.filter((record) =>
     activeList === "saved" ? Boolean(record.savedAt) : !record.savedAt,
@@ -122,7 +123,13 @@ export default function GakuchikaScreen() {
                 ]}
               >
                 <ThemedText style={{ color: theme.textSecondary }}>
-                  関連記録：{record.relatedActivityIds.length}件
+                  関連記録：
+                  {
+                    activities.filter((activity) =>
+                      record.relatedActivityIds.includes(activity.id),
+                    ).length
+                  }
+                  件
                 </ThemedText>
               </View>
               <View style={styles.divider} />

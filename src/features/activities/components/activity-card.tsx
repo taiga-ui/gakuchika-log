@@ -25,7 +25,11 @@ export function ActivityCard({
   const theme = useTheme();
   const tags = useAppStore((state) => state.tags);
   const categories = useAppStore((state) => state.categories);
-  const categoryKeyToDisplay = categoryKey ?? activity.categoryKey;
+  const projects = useAppStore((state) => state.projects);
+  const categoryKeyToDisplay =
+    projects.find((project) => project.id === activity.projectId)?.category ??
+    categoryKey ??
+    activity.categoryKey;
   const category =
     categories.find((item) => item.key === categoryKeyToDisplay) ??
     CATEGORY_MAP[categoryKeyToDisplay] ??
