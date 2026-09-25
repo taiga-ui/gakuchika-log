@@ -34,6 +34,15 @@ export type ActivityRecord = {
   updatedAt: ISODateString;
 };
 
+export const ES_DEFAULT_MAX_CHARACTERS = 400;
+
+export type EsData = {
+  company: string;
+  question: string;
+  maxCharacters: number;
+  content: string;
+};
+
 export type GakuchikaRecord = {
   id: string;
   title: string;
@@ -57,25 +66,9 @@ export type GakuchikaRecord = {
     result: string;
     learning: string;
   }>;
-  es?: {
-    company: string;
-    question: string;
-    maxCharacters: number;
-    content: string;
-  };
+  es?: EsData;
   savedAt?: ISODateString;
   createdAt: ISODateString;
-  updatedAt: ISODateString;
-};
-
-export type EsDraft = {
-  id: string;
-  title: string;
-  prompt: string;
-  content: string;
-  wordCount: number;
-  relatedGakuchikaId?: string;
-  relatedActivityIds: string[];
   updatedAt: ISODateString;
 };
 
