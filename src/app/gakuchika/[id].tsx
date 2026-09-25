@@ -16,6 +16,7 @@ import { Screen } from "@/components/ui/screen";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
+import { ES_DEFAULT_MAX_CHARACTERS } from "@/types/domain";
 
 type ReflectionKey =
   | "activity"
@@ -76,13 +77,15 @@ export default function GakuchikaDetailScreen() {
   const activities = useAppStore((state) => state.activities);
   const updateGakuchika = useAppStore((state) => state.updateGakuchika);
   const saveGakuchika = useAppStore((state) => state.saveGakuchika);
+  const saveEsToStore = useAppStore((state) => state.saveEs);
   const [reflection, setReflection] = useState(record?.reflection || {});
   const [company, setCompany] = useState(record?.es?.company || "");
   const [question, setQuestion] = useState(record?.es?.question || "");
   const [maxCharacters, setMaxCharacters] = useState(
-    String(record?.es?.maxCharacters || 400),
+    String(record?.es?.maxCharacters || ES_DEFAULT_MAX_CHARACTERS),
   );
   const [content, setContent] = useState(record?.es?.content || "");
+  const [esError, setEsError] = useState(false);
 
   if (!record)
     return (
@@ -109,27 +112,41 @@ export default function GakuchikaDetailScreen() {
     const next = {
       company,
       question,
-      maxCharacters: Number(maxCharacters) || 400,
+      maxCharacters: Number(maxCharacters) || ES_DEFAULT_MAX_CHARACTERS,
       content,
       ...patch,
     };
+    if (
+      !Number.isInteger(next.maxCharacters) ||
+      next.maxCharacters <= 0 ||
+      [...next.content].length > next.maxCharacters
+    ) {
+      setEsError(true);
+      return false;
+    }
     setCompany(next.company);
     setQuestion(next.question);
     setMaxCharacters(String(next.maxCharacters));
     setContent(next.content);
-    updateGakuchika(record.id, { es: next });
+    setEsError(false);
+    return saveEsToStore(record.id, next);
   };
   const count = [...content].length;
+  const effectiveMaxCharacters =
+    Number(maxCharacters) || ES_DEFAULT_MAX_CHARACTERS;
+  const isOverLimit = count > effectiveMaxCharacters;
   const handleSave = () => {
-    updateGakuchika(record.id, {
-      reflection,
-      es: {
+    if (
+      !saveEs({
         company,
         question,
-        maxCharacters: Number(maxCharacters) || 400,
+        maxCharacters: effectiveMaxCharacters,
         content,
-      },
-    });
+      })
+    ) {
+      return;
+    }
+    updateGakuchika(record.id, { reflection });
     saveGakuchika(record.id);
   };
 
@@ -266,9 +283,7 @@ export default function GakuchikaDetailScreen() {
             <TextInput
               value={maxCharacters}
               onChangeText={setMaxCharacters}
-              onBlur={() =>
-                saveEs({ maxCharacters: Number(maxCharacters) || 400 })
-              }
+              onBlur={() => saveEs({ maxCharacters: effectiveMaxCharacters })}
               keyboardType="number-pad"
               style={[
                 styles.limitInput,
@@ -276,13 +291,21 @@ export default function GakuchikaDetailScreen() {
               ]}
             />
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {count} / {maxCharacters || 400}文字
+              {count} / {effectiveMaxCharacters}文字
             </ThemedText>
           </View>
+          {esError || isOverLimit ? (
+            <ThemedText type="small" style={{ color: theme.danger }}>
+              ES本文は上限文字数以内で保存してください。
+            </ThemedText>
+          ) : null}
           <TextInput
             multiline
             value={content}
-            onChangeText={setContent}
+            onChangeText={(value) => {
+              setContent([...value].slice(0, effectiveMaxCharacters).join(""));
+              setEsError(false);
+            }}
             onBlur={() => saveEs({ content })}
             placeholder="整理した経験をもとに、ES本文を書いてみましょう。"
             placeholderTextColor={theme.textTertiary}
@@ -294,7 +317,13 @@ export default function GakuchikaDetailScreen() {
         </View>
         <Pressable
           onPress={handleSave}
-          style={[styles.saveButton, { backgroundColor: theme.primary }]}
+          disabled={isOverLimit}
+          style={[
+            styles.saveButton,
+            {
+              backgroundColor: isOverLimit ? theme.textTertiary : theme.primary,
+            },
+          ]}
         >
           <Ionicons
             name={record.savedAt ? "checkmark-circle-outline" : "save-outline"}

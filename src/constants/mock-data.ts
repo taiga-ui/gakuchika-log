@@ -1,6 +1,5 @@
 import type {
   ActivityRecord,
-  EsDraft,
   GakuchikaRecord,
   ProfileSummary,
   Project,
@@ -73,7 +72,6 @@ export const MOCK_PROJECTS: Project[] = [
     updatedAt: "2026-07-11T11:00:00.000Z",
   },
 ];
-
 export const MOCK_ACTIVITIES: ActivityRecord[] = [
   {
     id: "activity-001",
@@ -254,30 +252,5 @@ export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
     relatedActivityIds: ["activity-004"],
     createdAt: "2026-07-18T15:00:00.000Z",
     updatedAt: "2026-07-18T15:00:00.000Z",
-  },
-];
-
-export const MOCK_ES_DRAFTS: EsDraft[] = [
-  {
-    id: "es-001",
-    title: "学園祭の経験を使ったガクチカ",
-    prompt: "大学生活で最も力を入れたことを400字でまとめる",
-    content:
-      "学園祭で混雑導線を見直し、案内担当と誘導担当を分けて待ち時間を削減した。...",
-    wordCount: 164,
-    relatedGakuchikaId: "gk-001",
-    relatedActivityIds: ["activity-001", "activity-006"],
-    updatedAt: "2026-07-26T09:20:00.000Z",
-  },
-  {
-    id: "es-002",
-    title: "アルバイトでの改善経験",
-    prompt: "課題に対して工夫したことを整理する",
-    content:
-      "教育時間を短縮するために、写真付きマニュアルとチェックリストを整えた。...",
-    wordCount: 132,
-    relatedGakuchikaId: "gk-003",
-    relatedActivityIds: ["activity-004"],
-    updatedAt: "2026-07-18T15:30:00.000Z",
   },
 ];

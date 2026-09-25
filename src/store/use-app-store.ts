@@ -5,7 +5,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { ACTIVITY_CATEGORIES, type CategoryMeta } from "@/constants/categories";
 import {
   MOCK_ACTIVITIES,
-  MOCK_ES_DRAFTS,
   MOCK_GAKUCHIKA,
   MOCK_PROJECTS,
   PROFILE,
@@ -14,16 +13,22 @@ import type { TagId, TagMeta } from "@/constants/tags";
 import { TAGS } from "@/constants/tags";
 import type {
   ActivityRecord,
-  EsDraft,
+  EsData,
   GakuchikaRecord,
   ProfileSummary,
   Project,
 } from "@/types/domain";
+import { ES_DEFAULT_MAX_CHARACTERS } from "@/types/domain";
 import { toIsoDate } from "@/utils/date";
 
 type ActivityDraft = Omit<ActivityRecord, "id" | "createdAt" | "updatedAt">;
 type ProjectDetails = Pick<Project, "description" | "startDate" | "endDate">;
 const STORAGE_KEY = "gakuchika-log-state-v2";
+
+const isValidEs = (es: EsData) =>
+  Number.isInteger(es.maxCharacters) &&
+  es.maxCharacters > 0 &&
+  [...es.content].length <= es.maxCharacters;
 
 type AppState = {
   profile: ProfileSummary;
@@ -33,7 +38,6 @@ type AppState = {
   tags: TagMeta[];
   lastCreatedProjectId?: string;
   gakuchikaRecords: GakuchikaRecord[];
-  esDrafts: EsDraft[];
   searchQuery: string;
   selectedCategory: string;
   setSearchQuery: (query: string) => void;
@@ -60,14 +64,13 @@ type AppState = {
     >,
   ) => void;
   deleteProject: (id: string) => void;
+  saveEs: (id: string, es: EsData) => boolean;
   addGakuchika: (activityIds: string[], title?: string) => GakuchikaRecord;
   updateGakuchika: (
     id: string,
     patch: Partial<Omit<GakuchikaRecord, "id">>,
   ) => void;
   saveGakuchika: (id: string) => void;
-  addEsDraft: (draft: Omit<EsDraft, "id" | "updatedAt">) => EsDraft;
-  updateEsDraft: (id: string, patch: Partial<Omit<EsDraft, "id">>) => void;
 };
 
 const createId = (prefix: string) =>
@@ -89,7 +92,7 @@ const normalizeActivityReferences = (
   activities: ActivityRecord[],
   projects: Project[],
   gakuchikaRecords: GakuchikaRecord[],
-  esDrafts: EsDraft[],
+  legacyEsDrafts: unknown[] = [],
 ) => {
   const activityIds = new Set(activities.map((activity) => activity.id));
   const projectCategories = new Map(
@@ -101,6 +104,26 @@ const normalizeActivityReferences = (
       projectCategories.get(activity.projectId) ?? activity.categoryKey,
   }));
 
+  const legacyByGakuchikaId = new Map(
+    legacyEsDrafts
+      .filter(
+        (
+          draft,
+        ): draft is {
+          relatedGakuchikaId: string;
+          content: string;
+          prompt: string;
+        } =>
+          typeof draft === "object" &&
+          draft !== null &&
+          typeof (draft as Record<string, unknown>).relatedGakuchikaId ===
+            "string" &&
+          typeof (draft as Record<string, unknown>).content === "string" &&
+          typeof (draft as Record<string, unknown>).prompt === "string",
+      )
+      .map((draft) => [draft.relatedGakuchikaId, draft] as const),
+  );
+
   return {
     activities: normalizedActivities,
     gakuchikaRecords: gakuchikaRecords.map((record) => ({
@@ -108,12 +131,19 @@ const normalizeActivityReferences = (
       relatedActivityIds: record.relatedActivityIds.filter((id) =>
         activityIds.has(id),
       ),
-    })),
-    esDrafts: esDrafts.map((draft) => ({
-      ...draft,
-      relatedActivityIds: draft.relatedActivityIds.filter((id) =>
-        activityIds.has(id),
-      ),
+      ...(record.es || !legacyByGakuchikaId.has(record.id)
+        ? {}
+        : {
+            es: {
+              company: "",
+              question: legacyByGakuchikaId.get(record.id)!.prompt,
+              content: legacyByGakuchikaId.get(record.id)!.content,
+              maxCharacters: Math.max(
+                ES_DEFAULT_MAX_CHARACTERS,
+                [...legacyByGakuchikaId.get(record.id)!.content].length,
+              ),
+            },
+          }),
     })),
   };
 };
@@ -127,7 +157,6 @@ export const useAppStore = create<AppState>()(
       categories: [...ACTIVITY_CATEGORIES],
       tags: [...TAGS],
       gakuchikaRecords: MOCK_GAKUCHIKA,
-      esDrafts: MOCK_ES_DRAFTS,
       searchQuery: "",
       selectedCategory: "all",
       setSearchQuery: (query) => set({ searchQuery: query }),
@@ -179,12 +208,6 @@ export const useAppStore = create<AppState>()(
           gakuchikaRecords: state.gakuchikaRecords.map((record) => ({
             ...record,
             relatedActivityIds: record.relatedActivityIds.filter(
-              (activityId) => activityId !== id,
-            ),
-          })),
-          esDrafts: state.esDrafts.map((draft) => ({
-            ...draft,
-            relatedActivityIds: draft.relatedActivityIds.filter(
               (activityId) => activityId !== id,
             ),
           })),
@@ -259,12 +282,6 @@ export const useAppStore = create<AppState>()(
                 record.relatedActivityIds,
               ),
             })),
-            esDrafts: state.esDrafts.map((draft) => ({
-              ...draft,
-              relatedActivityIds: removeDeletedActivities(
-                draft.relatedActivityIds,
-              ),
-            })),
           };
         }),
       addTag: (label) => {
@@ -306,27 +323,30 @@ export const useAppStore = create<AppState>()(
         return record;
       },
       updateGakuchika: (id, patch) =>
-        set((state) => ({
-          gakuchikaRecords: state.gakuchikaRecords.map((record) =>
-            record.id === id
-              ? {
-                  ...record,
-                  ...patch,
-                  ...(patch.relatedActivityIds
-                    ? {
-                        relatedActivityIds: patch.relatedActivityIds.filter(
-                          (activityId) =>
-                            state.activities.some(
-                              (activity) => activity.id === activityId,
-                            ),
-                        ),
-                      }
-                    : {}),
-                  updatedAt: new Date().toISOString(),
-                }
-              : record,
-          ),
-        })),
+        set((state) => {
+          if (patch.es && !isValidEs(patch.es)) return state;
+          return {
+            gakuchikaRecords: state.gakuchikaRecords.map((record) =>
+              record.id === id
+                ? {
+                    ...record,
+                    ...patch,
+                    ...(patch.relatedActivityIds
+                      ? {
+                          relatedActivityIds: patch.relatedActivityIds.filter(
+                            (activityId) =>
+                              state.activities.some(
+                                (activity) => activity.id === activityId,
+                              ),
+                          ),
+                        }
+                      : {}),
+                    updatedAt: new Date().toISOString(),
+                  }
+                : record,
+            ),
+          };
+        }),
       saveGakuchika: (id) =>
         set((state) => ({
           gakuchikaRecords: state.gakuchikaRecords.map((record) =>
@@ -335,43 +355,19 @@ export const useAppStore = create<AppState>()(
               : record,
           ),
         })),
-      addEsDraft: (draft) => {
-        let record!: EsDraft;
-        set((state) => {
-          record = {
-            ...draft,
-            relatedActivityIds: draft.relatedActivityIds.filter((activityId) =>
-              state.activities.some((activity) => activity.id === activityId),
-            ),
-            id: createId("es"),
-            updatedAt: new Date().toISOString(),
-          };
-          return { esDrafts: [record, ...state.esDrafts] };
-        });
-        return record;
-      },
-      updateEsDraft: (id, patch) =>
+      saveEs: (id, es) => {
+        if (!isValidEs(es)) {
+          return false;
+        }
         set((state) => ({
-          esDrafts: state.esDrafts.map((draft) =>
-            draft.id === id
-              ? {
-                  ...draft,
-                  ...patch,
-                  ...(patch.relatedActivityIds
-                    ? {
-                        relatedActivityIds: patch.relatedActivityIds.filter(
-                          (activityId) =>
-                            state.activities.some(
-                              (activity) => activity.id === activityId,
-                            ),
-                        ),
-                      }
-                    : {}),
-                  updatedAt: new Date().toISOString(),
-                }
-              : draft,
+          gakuchikaRecords: state.gakuchikaRecords.map((record) =>
+            record.id === id
+              ? { ...record, es, updatedAt: new Date().toISOString() }
+              : record,
           ),
-        })),
+        }));
+        return true;
+      },
     }),
     {
       name: STORAGE_KEY,
@@ -401,13 +397,20 @@ export const useAppStore = create<AppState>()(
               : currentState.profile,
           categories: mergeCategories(persisted.categories),
         };
+        const legacyEsDrafts = Array.isArray(
+          (persisted as { esDrafts?: unknown }).esDrafts,
+        )
+          ? ((persisted as { esDrafts: unknown[] }).esDrafts ?? [])
+          : [];
+        const { esDrafts: _legacyEsDrafts, ...stateWithoutLegacyEsDrafts } =
+          merged as typeof merged & { esDrafts?: unknown };
         return {
-          ...merged,
+          ...stateWithoutLegacyEsDrafts,
           ...normalizeActivityReferences(
             merged.activities,
             merged.projects,
             merged.gakuchikaRecords,
-            merged.esDrafts,
+            legacyEsDrafts,
           ),
         };
       },
