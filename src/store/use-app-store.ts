@@ -22,6 +22,7 @@ import type {
 import { toIsoDate } from "@/utils/date";
 
 type ActivityDraft = Omit<ActivityRecord, "id" | "createdAt" | "updatedAt">;
+type ProjectDetails = Pick<Project, "description" | "startDate" | "endDate">;
 const STORAGE_KEY = "gakuchika-log-state-v2";
 
 type AppState = {
@@ -39,13 +40,25 @@ type AppState = {
   setSelectedCategory: (category: string) => void;
   updateProfile: (patch: Partial<ProfileSummary>) => void;
   addActivity: (draft: ActivityDraft) => ActivityRecord;
-  addProject: (name: string, category: Project["category"]) => Project;
+  addProject: (
+    name: string,
+    category: Project["category"],
+    details?: ProjectDetails,
+  ) => Project;
   addCategory: (label: string) => CategoryMeta;
   addTag: (label: string) => TagMeta;
   clearLastCreatedProject: () => void;
   updateActivity: (id: string, patch: Partial<ActivityRecord>) => void;
   deleteActivity: (id: string) => void;
-  updateProject: (id: string, patch: Partial<Project>) => void;
+  updateProject: (
+    id: string,
+    patch: Partial<
+      Pick<
+        Project,
+        "name" | "description" | "category" | "startDate" | "endDate"
+      >
+    >,
+  ) => void;
   deleteProject: (id: string) => void;
   addGakuchika: (activityIds: string[], title?: string) => GakuchikaRecord;
   updateGakuchika: (
@@ -176,12 +189,13 @@ export const useAppStore = create<AppState>()(
             ),
           })),
         })),
-      addProject: (name, category) => {
+      addProject: (name, category, details) => {
         const now = new Date().toISOString();
         const project: Project = {
           id: createId("project"),
           name,
           category,
+          ...details,
           createdAt: now,
           updatedAt: now,
         };
