@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -9,8 +8,27 @@ import {
   MOCK_PROJECTS,
   PROFILE,
 } from "@/constants/mock-data";
-import type { TagId, TagMeta } from "@/constants/tags";
+import type { TagMeta } from "@/constants/tags";
 import { TAGS } from "@/constants/tags";
+import {
+  addActivity as addActivityRecord,
+  addCategory as createCategory,
+  addGakuchika as createGakuchika,
+  addProject as createProject,
+  addTag as createTag,
+  updateActivity as editActivity,
+  updateGakuchika as editGakuchika,
+  updateProject as editProject,
+  mergeCategories,
+  deleteActivity as removeActivity,
+  deleteProject as removeProject,
+  saveEs as saveEsRecord,
+  saveGakuchika as saveGakuchikaRecord,
+  type ActivityDraft,
+  type AppData,
+  type ProjectDetails,
+} from "@/data/app-repository";
+import { APP_STORAGE_KEY, createAppStorage } from "@/data/local-storage";
 import type {
   ActivityRecord,
   EsData,
@@ -19,11 +37,6 @@ import type {
   Project,
 } from "@/types/domain";
 import { ES_DEFAULT_MAX_CHARACTERS } from "@/types/domain";
-import { toIsoDate } from "@/utils/date";
-
-type ActivityDraft = Omit<ActivityRecord, "id" | "createdAt" | "updatedAt">;
-type ProjectDetails = Pick<Project, "description" | "startDate" | "endDate">;
-const STORAGE_KEY = "gakuchika-log-state-v2";
 
 type HydrationStatus = "loading" | "hydrated" | "error";
 type PersistenceStatus = "idle" | "saving" | "saved" | "error";
@@ -46,26 +59,6 @@ let reportStorageStatus: (
   status: PersistenceStatus,
   error?: unknown,
 ) => void = () => undefined;
-
-const appStorage = {
-  getItem: (name: string) => AsyncStorage.getItem(name),
-  setItem: async (name: string, value: string) => {
-    reportStorageStatus("saving");
-    try {
-      await AsyncStorage.setItem(name, value);
-      reportStorageStatus("saved");
-    } catch (error) {
-      reportStorageStatus("error", error);
-      throw error;
-    }
-  },
-  removeItem: (name: string) => AsyncStorage.removeItem(name),
-};
-
-const isValidEs = (es: EsData) =>
-  Number.isInteger(es.maxCharacters) &&
-  es.maxCharacters > 0 &&
-  [...es.content].length <= es.maxCharacters;
 
 type AppState = {
   profile: ProfileSummary;
@@ -110,20 +103,7 @@ type AppState = {
   saveGakuchika: (id: string) => void;
 };
 
-const createId = (prefix: string) =>
-  `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-
-const mergeCategories = (persistedCategories?: CategoryMeta[]) => {
-  const savedCategories = persistedCategories ?? [];
-  const builtInKeys = new Set<string>(
-    ACTIVITY_CATEGORIES.map((category) => category.key),
-  );
-  const customCategories = savedCategories.filter(
-    (category) => !builtInKeys.has(category.key),
-  );
-
-  return [...ACTIVITY_CATEGORIES, ...customCategories];
-};
+const toAppData = (state: AppState): AppData => state;
 
 const normalizeActivityReferences = (
   activities: ActivityRecord[],
@@ -201,214 +181,71 @@ export const useAppStore = create<AppState>()(
       updateProfile: (patch) =>
         set((state) => ({ profile: { ...state.profile, ...patch } })),
       addActivity: (draft) => {
-        const now = new Date();
-        let record: ActivityRecord = {
-          ...draft,
-          id: createId("activity"),
-          createdAt: now.toISOString(),
-          updatedAt: now.toISOString(),
-          date: draft.date || toIsoDate(now),
-        };
+        let record!: ActivityRecord;
         set((state) => {
-          const project = state.projects.find(
-            (item) => item.id === record.projectId,
-          );
-          if (project) record = { ...record, categoryKey: project.category };
-          return { activities: [record, ...state.activities] };
+          const result = addActivityRecord(toAppData(state), draft);
+          record = result.record;
+          return result.changes;
         });
         return record;
       },
       updateActivity: (id, patch) =>
-        set((state) => {
-          const current = state.activities.find(
-            (activity) => activity.id === id,
-          );
-          const project = state.projects.find(
-            (item) => item.id === (patch.projectId ?? current?.projectId),
-          );
-          return {
-            activities: state.activities.map((activity) =>
-              activity.id === id
-                ? {
-                    ...activity,
-                    ...patch,
-                    ...(project ? { categoryKey: project.category } : {}),
-                    updatedAt: new Date().toISOString(),
-                  }
-                : activity,
-            ),
-          };
-        }),
+        set((state) => editActivity(toAppData(state), id, patch)),
       deleteActivity: (id) =>
-        set((state) => ({
-          activities: state.activities.filter((activity) => activity.id !== id),
-          gakuchikaRecords: state.gakuchikaRecords.map((record) => ({
-            ...record,
-            relatedActivityIds: record.relatedActivityIds.filter(
-              (activityId) => activityId !== id,
-            ),
-          })),
-        })),
+        set((state) => removeActivity(toAppData(state), id)),
       addProject: (name, category, details) => {
-        const now = new Date().toISOString();
-        const project: Project = {
-          id: createId("project"),
-          name,
-          category,
-          ...details,
-          createdAt: now,
-          updatedAt: now,
-        };
+        const result = createProject(name, category, details);
         set((state) => ({
-          projects: [project, ...state.projects],
-          lastCreatedProjectId: project.id,
+          projects: [result.project, ...state.projects],
+          lastCreatedProjectId: result.project.id,
         }));
-        return project;
+        return result.project;
       },
       addCategory: (label) => {
-        const category: CategoryMeta = {
-          key: createId("category"),
-          label,
-          icon: "folder-outline",
-          color: "#475569",
-          softColor: "#EAEFF7",
-          borderColor: "#CBD5E1",
-          description: "ユーザーが追加したカテゴリ",
-        };
+        const category = createCategory(label);
         set((state) => ({ categories: [...state.categories, category] }));
         return category;
       },
       updateProject: (id, patch) =>
-        set((state) => {
-          const nextProjects = state.projects.map((project) =>
-            project.id === id
-              ? { ...project, ...patch, updatedAt: new Date().toISOString() }
-              : project,
-          );
-          const nextProject = nextProjects.find((project) => project.id === id);
-          return {
-            projects: nextProjects,
-            ...(nextProject
-              ? {
-                  activities: state.activities.map((activity) =>
-                    activity.projectId === id
-                      ? { ...activity, categoryKey: nextProject.category }
-                      : activity,
-                  ),
-                }
-              : {}),
-          };
-        }),
+        set((state) => editProject(toAppData(state), id, patch)),
       deleteProject: (id) =>
-        set((state) => {
-          const deletedActivityIds = new Set(
-            state.activities
-              .filter((activity) => activity.projectId === id)
-              .map((activity) => activity.id),
-          );
-          const removeDeletedActivities = (ids: string[]) =>
-            ids.filter((activityId) => !deletedActivityIds.has(activityId));
-          return {
-            projects: state.projects.filter((project) => project.id !== id),
-            activities: state.activities.filter(
-              (activity) => activity.projectId !== id,
-            ),
-            gakuchikaRecords: state.gakuchikaRecords.map((record) => ({
-              ...record,
-              relatedActivityIds: removeDeletedActivities(
-                record.relatedActivityIds,
-              ),
-            })),
-          };
-        }),
+        set((state) => removeProject(toAppData(state), id)),
       addTag: (label) => {
-        const tag: TagMeta = {
-          id: createId("tag") as TagId,
-          label,
-          color: "#2563EB",
-          softColor: "#E8F0FF",
-        };
+        const tag = createTag(label);
         set((state) => ({ tags: [...state.tags, tag] }));
         return tag;
       },
       clearLastCreatedProject: () => set({ lastCreatedProjectId: undefined }),
       addGakuchika: (activityIds, title) => {
-        const now = new Date().toISOString();
         let record!: GakuchikaRecord;
         set((state) => {
-          record = {
-            id: createId("gakuchika"),
-            title: title?.trim() || "無題のガクチカ",
-            overview: "",
-            period: "",
-            role: "",
-            challenge: "",
-            difficulty: "",
-            action: "",
-            result: "",
-            learning: "",
-            numbers: [],
-            artifact: "",
-            relatedActivityIds: activityIds.filter((activityId) =>
-              state.activities.some((activity) => activity.id === activityId),
-            ),
-            createdAt: now,
-            updatedAt: now,
-          };
-          return { gakuchikaRecords: [record, ...state.gakuchikaRecords] };
+          const result = createGakuchika(toAppData(state), activityIds, title);
+          record = result.record;
+          return result.changes;
         });
         return record;
       },
       updateGakuchika: (id, patch) =>
         set((state) => {
-          if (patch.es && !isValidEs(patch.es)) return state;
-          return {
-            gakuchikaRecords: state.gakuchikaRecords.map((record) =>
-              record.id === id
-                ? {
-                    ...record,
-                    ...patch,
-                    ...(patch.relatedActivityIds
-                      ? {
-                          relatedActivityIds: patch.relatedActivityIds.filter(
-                            (activityId) =>
-                              state.activities.some(
-                                (activity) => activity.id === activityId,
-                              ),
-                          ),
-                        }
-                      : {}),
-                    updatedAt: new Date().toISOString(),
-                  }
-                : record,
-            ),
-          };
+          return editGakuchika(toAppData(state), id, patch) ?? state;
         }),
       saveGakuchika: (id) =>
-        set((state) => ({
-          gakuchikaRecords: state.gakuchikaRecords.map((record) =>
-            record.id === id
-              ? { ...record, savedAt: new Date().toISOString() }
-              : record,
-          ),
-        })),
+        set((state) => saveGakuchikaRecord(toAppData(state), id)),
       saveEs: (id, es) => {
-        if (!isValidEs(es)) {
-          return false;
-        }
-        set((state) => ({
-          gakuchikaRecords: state.gakuchikaRecords.map((record) =>
-            record.id === id
-              ? { ...record, es, updatedAt: new Date().toISOString() }
-              : record,
-          ),
-        }));
+        let changes: Partial<AppData> | null = null;
+        set((state) => {
+          changes = saveEsRecord(toAppData(state), id, es);
+          return changes ?? state;
+        });
+        if (!changes) return false;
         return true;
       },
     }),
     {
-      name: STORAGE_KEY,
-      storage: createJSONStorage(() => appStorage),
+      name: APP_STORAGE_KEY,
+      storage: createJSONStorage(() =>
+        createAppStorage((status, error) => reportStorageStatus(status, error)),
+      ),
       onRehydrateStorage: () => (state, error) => {
         usePersistenceStore.setState({
           hydrationStatus: error ? "error" : "hydrated",
