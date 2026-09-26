@@ -25,6 +25,43 @@ type ActivityDraft = Omit<ActivityRecord, "id" | "createdAt" | "updatedAt">;
 type ProjectDetails = Pick<Project, "description" | "startDate" | "endDate">;
 const STORAGE_KEY = "gakuchika-log-state-v2";
 
+type HydrationStatus = "loading" | "hydrated" | "error";
+type PersistenceStatus = "idle" | "saving" | "saved" | "error";
+
+type PersistenceRuntimeState = {
+  hydrationStatus: HydrationStatus;
+  hydrationError: boolean;
+  persistenceStatus: PersistenceStatus;
+  persistenceError: boolean;
+};
+
+export const usePersistenceStore = create<PersistenceRuntimeState>(() => ({
+  hydrationStatus: "loading",
+  hydrationError: false,
+  persistenceStatus: "idle",
+  persistenceError: false,
+}));
+
+let reportStorageStatus: (
+  status: PersistenceStatus,
+  error?: unknown,
+) => void = () => undefined;
+
+const appStorage = {
+  getItem: (name: string) => AsyncStorage.getItem(name),
+  setItem: async (name: string, value: string) => {
+    reportStorageStatus("saving");
+    try {
+      await AsyncStorage.setItem(name, value);
+      reportStorageStatus("saved");
+    } catch (error) {
+      reportStorageStatus("error", error);
+      throw error;
+    }
+  },
+  removeItem: (name: string) => AsyncStorage.removeItem(name),
+};
+
 const isValidEs = (es: EsData) =>
   Number.isInteger(es.maxCharacters) &&
   es.maxCharacters > 0 &&
@@ -371,7 +408,16 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: STORAGE_KEY,
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => appStorage),
+      onRehydrateStorage: () => (state, error) => {
+        usePersistenceStore.setState({
+          hydrationStatus: error ? "error" : "hydrated",
+          hydrationError: Boolean(error),
+        });
+        if (state && error) {
+          console.error("Failed to restore local data", error);
+        }
+      },
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<AppState>;
         const persistedProfile = persisted.profile;
@@ -417,3 +463,21 @@ export const useAppStore = create<AppState>()(
     },
   ),
 );
+
+reportStorageStatus = (status, error) => {
+  usePersistenceStore.setState({
+    persistenceStatus: status,
+    persistenceError: status === "error",
+  });
+  if (error) {
+    console.error("Failed to save local data", error);
+  }
+};
+
+export const rehydrateApp = () => {
+  void useAppStore.persist.rehydrate();
+};
+
+export const retryPersistence = () => {
+  useAppStore.setState((state) => ({ ...state }));
+};

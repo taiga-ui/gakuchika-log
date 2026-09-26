@@ -10,7 +10,7 @@ import { TagChip } from "@/components/ui/tag-chip";
 import type { TagId } from "@/constants/tags";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
 import { formatMonthLabel, parseIsoDate, toIsoDate } from "@/utils/date";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -54,6 +54,9 @@ export default function NewActivityScreen() {
   const clearLastCreatedProject = useAppStore(
     (state) => state.clearLastCreatedProject,
   );
+  const persistenceStatus = usePersistenceStore(
+    (state) => state.persistenceStatus,
+  );
   const [title, setTitle] = useState(() => activityToEdit?.title ?? "");
   const [body, setBody] = useState(() => activityToEdit?.body ?? "");
   const [date, setDate] = useState(
@@ -76,6 +79,12 @@ export default function NewActivityScreen() {
     return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
   });
   const [draftDate, setDraftDate] = useState(date);
+  const [errors, setErrors] = useState({
+    title: "",
+    body: "",
+    date: "",
+    project: "",
+  });
   const hasMounted = useRef(false);
 
   const today = new Date();
@@ -147,7 +156,16 @@ export default function NewActivityScreen() {
 
   const handleSave = () => {
     const project = projects.find((item) => item.id === selectedProjectId);
-    if (!title.trim() || !body.trim() || !project) return;
+    const nextErrors = {
+      title: title.trim() ? "" : "タイトルを入力してください。",
+      body: body.trim() ? "" : "内容を入力してください。",
+      date: date.trim() ? "" : "日付を選択してください。",
+      project: project ? "" : "Projectを選択してください。",
+    };
+    setErrors(nextErrors);
+    if (!title.trim() || !body.trim() || !date.trim() || !project) {
+      return;
+    }
     if (activityToEdit) {
       updateActivity(activityToEdit.id, {
         title: title.trim(),
@@ -193,16 +211,26 @@ export default function NewActivityScreen() {
         <FormField
           label="タイトル"
           value={title}
-          onChangeText={setTitle}
+          onChangeText={(value) => {
+            setTitle(value);
+            if (value.trim())
+              setErrors((current) => ({ ...current, title: "" }));
+          }}
           placeholder="例: UIを改善した"
+          errorText={errors.title}
         />
         <FormField
           label="内容"
           value={body}
-          onChangeText={setBody}
+          onChangeText={(value) => {
+            setBody(value);
+            if (value.trim())
+              setErrors((current) => ({ ...current, body: "" }));
+          }}
           placeholder="何をしたか、工夫したかを書き残す"
           multiline
           numberOfLines={5}
+          errorText={errors.body}
         />
         <View style={styles.dateField}>
           <ThemedText type="smallBold" style={{ color: theme.text }}>
@@ -223,6 +251,11 @@ export default function NewActivityScreen() {
               color={theme.textSecondary}
             />
           </Pressable>
+          {errors.date ? (
+            <ThemedText type="small" style={{ color: theme.danger }}>
+              {errors.date}
+            </ThemedText>
+          ) : null}
         </View>
         <FormField
           label="場所"
@@ -255,13 +288,21 @@ export default function NewActivityScreen() {
               key={project.id}
               label={project.name}
               selected={selectedProjectId === project.id}
-              onPress={() => setSelectedProjectId(project.id)}
+              onPress={() => {
+                setSelectedProjectId(project.id);
+                setErrors((current) => ({ ...current, project: "" }));
+              }}
             />
           ))}
         </View>
         {!projects.length ? (
           <ThemedText style={{ color: theme.textSecondary }}>
             まだプロジェクトがありません。
+          </ThemedText>
+        ) : null}
+        {errors.project ? (
+          <ThemedText type="small" style={{ color: theme.danger }}>
+            {errors.project}
           </ThemedText>
         ) : null}
       </View>
@@ -493,7 +534,7 @@ export default function NewActivityScreen() {
           { backgroundColor: theme.primary, opacity: canSave ? 1 : 0.5 },
         ]}
         onPress={handleSave}
-        disabled={!canSave}
+        disabled={persistenceStatus === "saving"}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           {activityToEdit ? "更新" : "保存"}
