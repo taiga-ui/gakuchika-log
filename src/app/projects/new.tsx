@@ -10,7 +10,7 @@ import { TagChip } from "@/components/ui/tag-chip";
 import type { ActivityCategoryKey } from "@/constants/categories";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
 
 export default function NewProjectScreen() {
   const router = useRouter();
@@ -36,10 +36,18 @@ export default function NewProjectScreen() {
   );
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const persistenceStatus = usePersistenceStore(
+    (state) => state.persistenceStatus,
+  );
 
   const handleSave = () => {
     const trimmedName = name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName) {
+      setNameError("プロジェクト名を入力してください。");
+      return;
+    }
+    setNameError("");
     const details = {
       description: description.trim() || undefined,
       startDate: startDate.trim() || undefined,
@@ -85,8 +93,12 @@ export default function NewProjectScreen() {
         <FormField
           label="プロジェクト名"
           value={name}
-          onChangeText={setName}
+          onChangeText={(value) => {
+            setName(value);
+            if (value.trim()) setNameError("");
+          }}
           placeholder="例: 学園祭企画"
+          errorText={nameError}
         />
         <FormField
           label="説明（任意）"
@@ -202,7 +214,7 @@ export default function NewProjectScreen() {
           { backgroundColor: theme.primary, opacity: name.trim() ? 1 : 0.5 },
         ]}
         onPress={handleSave}
-        disabled={!name.trim()}
+        disabled={persistenceStatus === "saving"}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           保存

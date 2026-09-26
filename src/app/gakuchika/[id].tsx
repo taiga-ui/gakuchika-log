@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
 import { ES_DEFAULT_MAX_CHARACTERS } from "@/types/domain";
 
 type ReflectionKey =
@@ -78,6 +78,9 @@ export default function GakuchikaDetailScreen() {
   const updateGakuchika = useAppStore((state) => state.updateGakuchika);
   const saveGakuchika = useAppStore((state) => state.saveGakuchika);
   const saveEsToStore = useAppStore((state) => state.saveEs);
+  const persistenceStatus = usePersistenceStore(
+    (state) => state.persistenceStatus,
+  );
   const [reflection, setReflection] = useState(record?.reflection || {});
   const [company, setCompany] = useState(record?.es?.company || "");
   const [question, setQuestion] = useState(record?.es?.question || "");
@@ -317,7 +320,7 @@ export default function GakuchikaDetailScreen() {
         </View>
         <Pressable
           onPress={handleSave}
-          disabled={isOverLimit}
+          disabled={isOverLimit || persistenceStatus === "saving"}
           style={[
             styles.saveButton,
             {

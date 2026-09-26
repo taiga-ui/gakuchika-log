@@ -12,6 +12,7 @@ type FormFieldProps = {
   multiline?: boolean;
   numberOfLines?: number;
   helperText?: string;
+  errorText?: string;
 };
 
 export function FormField({
@@ -22,6 +23,7 @@ export function FormField({
   multiline = false,
   numberOfLines,
   helperText,
+  errorText,
 }: FormFieldProps) {
   const theme = useTheme();
 
@@ -54,6 +56,11 @@ export function FormField({
       {helperText ? (
         <ThemedText type="small" style={{ color: theme.textTertiary }}>
           {helperText}
+        </ThemedText>
+      ) : null}
+      {errorText ? (
+        <ThemedText type="small" style={{ color: theme.danger }}>
+          {errorText}
         </ThemedText>
       ) : null}
     </View>

@@ -8,7 +8,7 @@ import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
 
 export default function NewGakuchikaScreen() {
   const router = useRouter();
@@ -16,8 +16,13 @@ export default function NewGakuchikaScreen() {
   const activities = useAppStore((state) => state.activities);
   const projects = useAppStore((state) => state.projects);
   const addGakuchika = useAppStore((state) => state.addGakuchika);
+  const persistenceStatus = usePersistenceStore(
+    (state) => state.persistenceStatus,
+  );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
+  const [activitiesError, setActivitiesError] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(
     projects[0]?.id ?? "",
   );
@@ -29,6 +34,15 @@ export default function NewGakuchikaScreen() {
         : [...current, id],
     );
   const handleAdd = () => {
+    const nextTitleError = title.trim()
+      ? ""
+      : "ガクチカのタイトルを入力してください。";
+    const nextActivitiesError = selectedIds.length
+      ? ""
+      : "活動記録を1件以上選択してください。";
+    setTitleError(nextTitleError);
+    setActivitiesError(nextActivitiesError);
+    if (nextTitleError || nextActivitiesError) return;
     const record = addGakuchika(selectedIds, title);
     router.replace(`/gakuchika/${record.id}` as never);
   };
@@ -53,8 +67,12 @@ export default function NewGakuchikaScreen() {
         <FormField
           label="ガクチカのタイトル"
           value={title}
-          onChangeText={setTitle}
+          onChangeText={(value) => {
+            setTitle(value);
+            if (value.trim()) setTitleError("");
+          }}
           placeholder="例：サークルのアプリ開発プロジェクト"
+          errorText={titleError}
         />
         <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
           プロジェクト
@@ -143,8 +161,13 @@ export default function NewGakuchikaScreen() {
         <ThemedText style={{ color: theme.textSecondary, marginTop: 12 }}>
           選択中：{selectedIds.length}件
         </ThemedText>
+        {activitiesError ? (
+          <ThemedText type="small" style={{ color: theme.danger }}>
+            {activitiesError}
+          </ThemedText>
+        ) : null}
         <Pressable
-          disabled={!selectedIds.length || !title.trim()}
+          disabled={persistenceStatus === "saving"}
           onPress={handleAdd}
           style={[
             styles.primaryButton,
