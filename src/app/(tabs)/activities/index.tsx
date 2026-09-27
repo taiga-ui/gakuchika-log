@@ -220,8 +220,6 @@ export default function ActivitiesScreen() {
                   icon="folder-open-outline"
                   title="プロジェクトがありません"
                   description="このカテゴリにプロジェクトを追加して、活動記録をまとめましょう。"
-                  actionLabel="プロジェクトを追加"
-                  onActionPress={() => router.push("/projects/new" as never)}
                 />
               )}
             </>
