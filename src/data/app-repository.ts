@@ -12,10 +12,7 @@ export type ActivityDraft = Omit<
   ActivityRecord,
   "id" | "createdAt" | "updatedAt"
 >;
-export type ProjectDetails = Pick<
-  Project,
-  "description" | "startDate" | "endDate"
->;
+export type ProjectDetails = Pick<Project, "description">;
 
 export type AppData = {
   activities: ActivityRecord[];
@@ -106,9 +103,7 @@ export const addProject = (
 export const updateProject = (
   data: AppData,
   id: string,
-  patch: Partial<
-    Pick<Project, "name" | "description" | "category" | "startDate" | "endDate">
-  >,
+  patch: Partial<Pick<Project, "name" | "description" | "category">>,
 ): Partial<AppData> => {
   const projects = data.projects.map((project) =>
     project.id === id

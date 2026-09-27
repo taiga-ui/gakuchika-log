@@ -105,12 +105,6 @@ export default function ProjectDetailScreen() {
           {project.description}
         </ThemedText>
       ) : null}
-      {project.startDate || project.endDate ? (
-        <ThemedText style={{ color: theme.textTertiary, marginTop: 8 }}>
-          {project.startDate ?? "開始日未設定"} -{" "}
-          {project.endDate ?? "終了日未設定"}
-        </ThemedText>
-      ) : null}
       <Pressable
         style={[styles.addButton, { backgroundColor: theme.primary }]}
         onPress={() =>
@@ -162,15 +156,8 @@ export default function ProjectDetailScreen() {
       ) : (
         <EmptyState
           icon="document-text-outline"
-          title="まだ活動記録がありません"
+          title="まだ活動がありません"
           description="このプロジェクトの活動を記録しましょう。"
-          actionLabel="活動を記録"
-          onActionPress={() =>
-            router.push({
-              pathname: "/activities/new",
-              params: { projectId: project.id },
-            })
-          }
         />
       )}
     </Screen>

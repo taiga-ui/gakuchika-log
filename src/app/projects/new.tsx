@@ -27,10 +27,6 @@ export default function NewProjectScreen() {
   const [description, setDescription] = useState(
     () => projectToEdit?.description ?? "",
   );
-  const [startDate, setStartDate] = useState(
-    () => projectToEdit?.startDate ?? "",
-  );
-  const [endDate, setEndDate] = useState(() => projectToEdit?.endDate ?? "");
   const [category, setCategory] = useState<ActivityCategoryKey>(
     () => projectToEdit?.category ?? "research",
   );
@@ -50,8 +46,6 @@ export default function NewProjectScreen() {
     setNameError("");
     const details = {
       description: description.trim() || undefined,
-      startDate: startDate.trim() || undefined,
-      endDate: endDate.trim() || undefined,
     };
     if (projectToEdit) {
       updateProject(projectToEdit.id, {
@@ -107,18 +101,6 @@ export default function NewProjectScreen() {
           placeholder="プロジェクトの目的や概要"
           multiline
           numberOfLines={4}
-        />
-        <FormField
-          label="開始日（任意）"
-          value={startDate}
-          onChangeText={setStartDate}
-          placeholder="例: 2026-04-01"
-        />
-        <FormField
-          label="終了日（任意）"
-          value={endDate}
-          onChangeText={setEndDate}
-          placeholder="例: 2026-09-30"
         />
       </View>
 

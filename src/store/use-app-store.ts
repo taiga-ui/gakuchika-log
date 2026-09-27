@@ -86,12 +86,7 @@ type AppState = {
   deleteActivity: (id: string) => void;
   updateProject: (
     id: string,
-    patch: Partial<
-      Pick<
-        Project,
-        "name" | "description" | "category" | "startDate" | "endDate"
-      >
-    >,
+    patch: Partial<Pick<Project, "name" | "description" | "category">>,
   ) => void;
   deleteProject: (id: string) => void;
   saveEs: (id: string, es: EsData) => boolean;
