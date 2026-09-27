@@ -24,7 +24,3 @@ export const TAGS = [
   { id: "numbers", label: "数字", color: "#F97316", softColor: "#FFF1E5" },
   { id: "improvement", label: "改善", color: "#EF4444", softColor: "#FDE8E8" },
 ] as const satisfies readonly TagMeta[];
-
-export const TAG_MAP = Object.fromEntries(
-  TAGS.map((tag) => [tag.id, tag]),
-) as Record<TagId, TagMeta>;
