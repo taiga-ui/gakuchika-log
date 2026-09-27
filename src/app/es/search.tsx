@@ -28,6 +28,11 @@ export default function KeywordSearchScreen() {
     inputRef.current?.focus();
   }, []);
 
+  const handleSearch = () => {
+    setSearchQuery(query);
+    router.push("/es/results" as never);
+  };
+
   return (
     <Screen scroll={false}>
       <KeyboardAvoidingView
@@ -65,6 +70,7 @@ export default function KeywordSearchScreen() {
             placeholderTextColor={theme.textTertiary}
             style={[styles.input, { color: theme.text }]}
             returnKeyType="search"
+            onSubmitEditing={handleSearch}
           />
           {query.length > 0 ? (
             <Pressable
@@ -84,6 +90,7 @@ export default function KeywordSearchScreen() {
           <Pressable
             accessibilityLabel="検索"
             style={[styles.submitButton, { backgroundColor: theme.primary }]}
+            onPress={handleSearch}
           >
             <Ionicons name="arrow-up" size={26} color={theme.textInverse} />
           </Pressable>
