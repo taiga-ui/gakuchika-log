@@ -191,14 +191,6 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
 ];
 
-export const CATEGORY_COUNT_MAP = MOCK_ACTIVITIES.reduce(
-  (acc, activity) => {
-    acc[activity.categoryKey] = (acc[activity.categoryKey] ?? 0) + 1;
-    return acc;
-  },
-  {} as Record<string, number>,
-);
-
 export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   {
     id: "gk-001",

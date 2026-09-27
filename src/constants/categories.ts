@@ -88,8 +88,6 @@ export const ACTIVITY_CATEGORIES = [
   },
 ] as const satisfies readonly CategoryMeta[];
 
-export const ALL_CATEGORY_KEY = "all" as const;
-
 export const CATEGORY_MAP = Object.fromEntries(
   ACTIVITY_CATEGORIES.map((category) => [category.key, category]),
 ) as Record<string, CategoryMeta>;
