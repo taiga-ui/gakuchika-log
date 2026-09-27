@@ -37,6 +37,7 @@ import type {
   Project,
 } from "@/types/domain";
 import { ES_DEFAULT_MAX_CHARACTERS } from "@/types/domain";
+import { searchRecords, type SearchResult } from "@/utils/search";
 
 type HydrationStatus = "loading" | "hydrated" | "error";
 type PersistenceStatus = "idle" | "saving" | "saved" | "error";
@@ -69,8 +70,10 @@ type AppState = {
   lastCreatedProjectId?: string;
   gakuchikaRecords: GakuchikaRecord[];
   searchQuery: string;
+  searchResults: SearchResult[];
   selectedCategory: string;
   setSearchQuery: (query: string) => void;
+  refreshSearchResults: () => void;
   setSelectedCategory: (category: string) => void;
   updateProfile: (patch: Partial<ProfileSummary>) => void;
   addActivity: (draft: ActivityDraft) => ActivityRecord;
@@ -170,8 +173,17 @@ export const useAppStore = create<AppState>()(
       tags: [...TAGS],
       gakuchikaRecords: MOCK_GAKUCHIKA,
       searchQuery: "",
+      searchResults: [],
       selectedCategory: "all",
-      setSearchQuery: (query) => set({ searchQuery: query }),
+      setSearchQuery: (query) =>
+        set((state) => ({
+          searchQuery: query,
+          searchResults: searchRecords(query, state),
+        })),
+      refreshSearchResults: () =>
+        set((state) => ({
+          searchResults: searchRecords(state.searchQuery, state),
+        })),
       setSelectedCategory: (category) => set({ selectedCategory: category }),
       updateProfile: (patch) =>
         set((state) => ({ profile: { ...state.profile, ...patch } })),
