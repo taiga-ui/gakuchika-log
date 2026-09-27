@@ -13,8 +13,6 @@ export type Project = {
   name: string;
   description?: string;
   category: ActivityCategoryKey;
-  startDate?: ISODateString;
-  endDate?: ISODateString;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 };

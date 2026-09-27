@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -58,6 +58,23 @@ export default function ActivityDetailScreen() {
   }
 
   const project = projects.find((item) => item.id === activity.projectId);
+  const handleDelete = () => {
+    Alert.alert(
+      "活動記録を削除しますか？",
+      "この活動記録は削除すると元に戻せません。",
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "削除",
+          style: "destructive",
+          onPress: () => {
+            deleteActivity(activity.id);
+            router.back();
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <Screen>
@@ -72,16 +89,30 @@ export default function ActivityDetailScreen() {
           <ThemedText type="smallBold" style={{ color: theme.primary }}>
             活動詳細
           </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          <ThemedText
+            type="small"
+            numberOfLines={1}
+            style={{ color: theme.textSecondary, fontSize: 13, lineHeight: 18 }}
+          >
             ガクチカにつながる記録を1件ずつ残す
           </ThemedText>
         </View>
         <Pressable
-          onPress={() => {
-            deleteActivity(activityId ?? "");
-            router.back();
-          }}
+          accessibilityLabel="活動記録を編集"
+          onPress={() =>
+            router.push({
+              pathname: "/activities/new",
+              params: { activityId: activity.id },
+            } as never)
+          }
         >
+          <Ionicons
+            name="create-outline"
+            size={22}
+            color={theme.textTertiary}
+          />
+        </Pressable>
+        <Pressable accessibilityLabel="活動記録を削除" onPress={handleDelete}>
           <Ionicons name="trash-outline" size={22} color={theme.textTertiary} />
         </Pressable>
       </View>
@@ -93,7 +124,7 @@ export default function ActivityDetailScreen() {
       <SectionBlock title="内容">
         <ThemedText
           type="default"
-          style={{ color: theme.textSecondary, lineHeight: 24 }}
+          style={{ color: theme.text, lineHeight: 24 }}
         >
           {activity.body}
         </ThemedText>
@@ -135,20 +166,6 @@ export default function ActivityDetailScreen() {
           )}
         </View>
       </SectionBlock>
-
-      <Pressable
-        style={[styles.editButton, { backgroundColor: theme.primary }]}
-        onPress={() =>
-          router.push({
-            pathname: "/activities/new",
-            params: { activityId: activity.id },
-          } as never)
-        }
-      >
-        <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
-          編集
-        </ThemedText>
-      </Pressable>
     </Screen>
   );
 }
@@ -189,12 +206,5 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-  },
-  editButton: {
-    alignItems: "center",
-    borderRadius: 18,
-    paddingVertical: 16,
-    marginTop: Spacing.five,
-    marginBottom: Spacing.six,
   },
 });
