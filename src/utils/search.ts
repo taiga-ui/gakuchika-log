@@ -1,3 +1,4 @@
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type { TagMeta } from "@/constants/tags";
 import type { ActivityRecord, GakuchikaRecord, Project } from "@/types/domain";
 
@@ -27,17 +28,31 @@ const normalize = (value: string) => value.trim().toLocaleLowerCase("ja-JP");
 const includesQuery = (values: string[], query: string) =>
   values.some((value) => normalize(value).includes(query));
 
-export function searchRecords(query: string, data: SearchData): SearchResult[] {
+export function searchRecords(
+  query: string,
+  data: SearchData,
+  ownerId = LOCAL_OWNER_ID,
+): SearchResult[] {
   const normalizedQuery = normalize(query);
   if (!normalizedQuery) return [];
 
+  const ownedActivities = data.activities.filter(
+    (activity) => activity.ownerId === ownerId,
+  );
+  const ownedProjects = data.projects.filter(
+    (project) => project.ownerId === ownerId,
+  );
+  const ownedGakuchikaRecords = data.gakuchikaRecords.filter(
+    (record) => record.ownerId === ownerId,
+  );
+
   const projectNames = new Map(
-    data.projects.map((project) => [project.id, project.name]),
+    ownedProjects.map((project) => [project.id, project.name]),
   );
   const tagNames = new Map(data.tags.map((tag) => [tag.id, tag.label]));
   const results: SearchResult[] = [];
 
-  data.activities.forEach((activity) => {
+  ownedActivities.forEach((activity) => {
     const values = [
       activity.title,
       activity.body,
@@ -59,7 +74,7 @@ export function searchRecords(query: string, data: SearchData): SearchResult[] {
     }
   });
 
-  data.projects.forEach((project) => {
+  ownedProjects.forEach((project) => {
     if (
       includesQuery([project.name, project.description ?? ""], normalizedQuery)
     ) {
@@ -74,7 +89,7 @@ export function searchRecords(query: string, data: SearchData): SearchResult[] {
     }
   });
 
-  data.gakuchikaRecords.forEach((record) => {
+  ownedGakuchikaRecords.forEach((record) => {
     const values = [
       record.title,
       record.overview,

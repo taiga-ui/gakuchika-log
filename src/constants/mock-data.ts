@@ -1,3 +1,4 @@
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type {
   ActivityRecord,
   GakuchikaRecord,
@@ -16,6 +17,7 @@ export const PROFILE: ProfileSummary = {
 export const MOCK_PROJECTS: Project[] = [
   {
     id: "project-club",
+    ownerId: LOCAL_OWNER_ID,
     name: "学園祭企画",
     description: "学園祭の企画と運営を記録するプロジェクト",
     category: "club",
@@ -24,6 +26,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-internship",
+    ownerId: LOCAL_OWNER_ID,
     name: "商社インターン",
     category: "internship",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -31,6 +34,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-competition",
+    ownerId: LOCAL_OWNER_ID,
     name: "学内ハッカソン",
     category: "competition",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -38,6 +42,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-development",
+    ownerId: LOCAL_OWNER_ID,
     name: "React学習会",
     category: "development",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -45,6 +50,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-research",
+    ownerId: LOCAL_OWNER_ID,
     name: "マーケティングゼミ",
     category: "research",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -52,6 +58,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-part-time",
+    ownerId: LOCAL_OWNER_ID,
     name: "カフェバイト",
     category: "part-time",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -59,6 +66,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-study",
+    ownerId: LOCAL_OWNER_ID,
     name: "就活準備",
     category: "study",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -66,6 +74,7 @@ export const MOCK_PROJECTS: Project[] = [
   },
   {
     id: "project-volunteer",
+    ownerId: LOCAL_OWNER_ID,
     name: "地域イベント",
     category: "volunteer",
     createdAt: "2026-07-01T09:00:00.000Z",
@@ -75,6 +84,7 @@ export const MOCK_PROJECTS: Project[] = [
 export const MOCK_ACTIVITIES: ActivityRecord[] = [
   {
     id: "activity-001",
+    ownerId: LOCAL_OWNER_ID,
     title: "学園祭の企画班で導線改善を担当",
     body: "来場者の動きと混雑箇所を整理し、案内表示と導線を見直した。写真付きで改善前後を比較できるように記録した。",
     projectId: "project-club",
@@ -90,6 +100,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-007",
+    ownerId: LOCAL_OWNER_ID,
     title: "商社インターンで営業資料の改善提案を実施",
     body: "提案資料の見せ方を整理し、相手の理解が進みやすい構成に改善した。",
     projectId: "project-internship",
@@ -105,6 +116,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-008",
+    ownerId: LOCAL_OWNER_ID,
     title: "AIイベントでプロトタイプを発表した",
     body: "学生向けの体験型コンテンツを題材に、プロトタイプと改善ポイントを発表した。",
     projectId: "project-competition",
@@ -120,6 +132,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-002",
+    ownerId: LOCAL_OWNER_ID,
     title: "React学習会でUI改善を発表",
     body: "アクセシビリティを意識したコンポーネント分割を紹介し、画面設計の意図を説明した。",
     projectId: "project-development",
@@ -135,6 +148,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-003",
+    ownerId: LOCAL_OWNER_ID,
     title: "ゼミで競合分析の資料を作成",
     body: "数字の根拠を揃えて、比較の観点を整理。説明の順番まで意識して資料を作成した。",
     projectId: "project-research",
@@ -148,6 +162,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-004",
+    ownerId: LOCAL_OWNER_ID,
     title: "アルバイトで新人教育マニュアルを刷新",
     body: "手順の抜け漏れを洗い出し、写真と短い説明で読みやすい資料にまとめた。",
     projectId: "project-part-time",
@@ -163,6 +178,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-005",
+    ownerId: LOCAL_OWNER_ID,
     title: "就活イベントで自己分析を深めた",
     body: "強みの再整理を行い、面接で話す材料を活動ベースで棚卸しした。",
     projectId: "project-study",
@@ -176,6 +192,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
   },
   {
     id: "activity-006",
+    ownerId: LOCAL_OWNER_ID,
     title: "ボランティアで配布物の導線を整備",
     body: "参加者が迷わないように案内の流れを見直し、現場で試しながら修正した。",
     projectId: "project-volunteer",
@@ -194,6 +211,7 @@ export const MOCK_ACTIVITIES: ActivityRecord[] = [
 export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   {
     id: "gk-001",
+    ownerId: LOCAL_OWNER_ID,
     title: "学園祭企画班での運営改善",
     overview: "学園祭企画班で記録した複数の活動をもとに整理する経験。",
     period: "",
@@ -211,6 +229,7 @@ export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   },
   {
     id: "gk-002",
+    ownerId: LOCAL_OWNER_ID,
     title: "React学習会でUI改善を発表",
     overview:
       "アクセシビリティを意識したコンポーネント分割を紹介し、画面設計の意図を説明した。",
@@ -229,6 +248,7 @@ export const MOCK_GAKUCHIKA: GakuchikaRecord[] = [
   },
   {
     id: "gk-003",
+    ownerId: LOCAL_OWNER_ID,
     title: "アルバイトで新人教育マニュアルを刷新",
     overview:
       "手順の抜け漏れを洗い出し、写真と短い説明で読みやすい資料にまとめた。",

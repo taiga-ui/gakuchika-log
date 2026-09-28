@@ -9,7 +9,7 @@ export type PhotoAsset = ImageSourcePropType | null;
 
 export type Project = {
   id: string;
-  ownerId?: string;
+  ownerId: string;
   name: string;
   description?: string;
   category: ActivityCategoryKey;
@@ -19,7 +19,7 @@ export type Project = {
 
 export type ActivityRecord = {
   id: string;
-  ownerId?: string;
+  ownerId: string;
   projectId: string;
   title: string;
   body: string;
@@ -37,7 +37,7 @@ export type ActivityRecord = {
 export const ES_DEFAULT_MAX_CHARACTERS = 400;
 
 export type EsData = {
-  ownerId?: string;
+  ownerId: string;
   company: string;
   question: string;
   maxCharacters: number;
@@ -46,7 +46,7 @@ export type EsData = {
 
 export type GakuchikaRecord = {
   id: string;
-  ownerId?: string;
+  ownerId: string;
   title: string;
   overview: string;
   period: string;
