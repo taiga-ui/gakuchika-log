@@ -8,6 +8,7 @@ import {
   MOCK_PROJECTS,
   PROFILE,
 } from "@/constants/mock-data";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type { TagMeta } from "@/constants/tags";
 import { TAGS } from "@/constants/tags";
 import {
@@ -26,12 +27,12 @@ import {
   saveGakuchika as saveGakuchikaRecord,
   type ActivityDraft,
   type AppData,
+  type EsDraft,
   type ProjectDetails,
 } from "@/data/app-repository";
 import { APP_STORAGE_KEY, createAppStorage } from "@/data/local-storage";
 import type {
   ActivityRecord,
-  EsData,
   GakuchikaRecord,
   ProfileSummary,
   Project,
@@ -104,7 +105,7 @@ type AppState = {
     patch: Partial<Pick<Project, "name" | "description" | "category">>,
   ) => void;
   deleteProject: (id: string) => void;
-  saveEs: (id: string, es: EsData) => boolean;
+  saveEs: (id: string, es: EsDraft) => boolean;
   addGakuchika: (activityIds: string[], title?: string) => GakuchikaRecord;
   updateGakuchika: (
     id: string,
@@ -160,9 +161,17 @@ const normalizeActivityReferences = (
   );
 
   return {
-    activities: normalizedActivities,
+    projects: projects.map((project) => ({
+      ...project,
+      ownerId: LOCAL_OWNER_ID,
+    })),
+    activities: normalizedActivities.map((activity) => ({
+      ...activity,
+      ownerId: LOCAL_OWNER_ID,
+    })),
     gakuchikaRecords: gakuchikaRecords.map((record) => ({
       ...record,
+      ownerId: LOCAL_OWNER_ID,
       relatedActivityIds: record.relatedActivityIds.filter((id) =>
         activityIds.has(id),
       ),
@@ -170,6 +179,7 @@ const normalizeActivityReferences = (
         ? {}
         : {
             es: {
+              ownerId: LOCAL_OWNER_ID,
               company: "",
               question: legacyByGakuchikaId.get(record.id)!.prompt,
               content: legacyByGakuchikaId.get(record.id)!.content,
@@ -179,6 +189,7 @@ const normalizeActivityReferences = (
               ),
             },
           }),
+      ...(record.es ? { es: { ...record.es, ownerId: LOCAL_OWNER_ID } } : {}),
     })),
   };
 };
