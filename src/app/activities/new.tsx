@@ -10,7 +10,11 @@ import { TagChip } from "@/components/ui/tag-chip";
 import type { TagId } from "@/constants/tags";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
+import {
+  useAppStore,
+  usePersistenceStore,
+  waitForPersistence,
+} from "@/store/use-app-store";
 import { formatMonthLabel, parseIsoDate, toIsoDate } from "@/utils/date";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -54,6 +58,7 @@ export default function NewActivityScreen() {
   const clearLastCreatedProject = useAppStore(
     (state) => state.clearLastCreatedProject,
   );
+  const restoreData = useAppStore((state) => state.restoreData);
   const persistenceStatus = usePersistenceStore(
     (state) => state.persistenceStatus,
   );
@@ -85,6 +90,8 @@ export default function NewActivityScreen() {
     date: "",
     project: "",
   });
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const hasMounted = useRef(false);
 
   const today = new Date();
@@ -154,7 +161,7 @@ export default function NewActivityScreen() {
     setIsTagModalVisible(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const project = projects.find((item) => item.id === selectedProjectId);
     const nextErrors = {
       title: title.trim() ? "" : "タイトルを入力してください。",
@@ -166,6 +173,10 @@ export default function NewActivityScreen() {
     if (!title.trim() || !body.trim() || !date.trim() || !project) {
       return;
     }
+    if (isSaving) return;
+    setSaveError("");
+    setIsSaving(true);
+    const snapshot = useAppStore.getState();
     if (activityToEdit) {
       updateActivity(activityToEdit.id, {
         title: title.trim(),
@@ -176,7 +187,15 @@ export default function NewActivityScreen() {
         projectId: project.id,
         tagIds: selectedTagIds.length ? selectedTagIds : ["analysis"],
       });
-      router.replace(`/activities/${activityToEdit.id}`);
+      try {
+        await waitForPersistence();
+        router.replace(`/activities/${activityToEdit.id}`);
+      } catch {
+        restoreData(snapshot);
+        setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+      } finally {
+        setIsSaving(false);
+      }
       return;
     }
     const created = addActivity({
@@ -188,7 +207,15 @@ export default function NewActivityScreen() {
       projectId: project.id,
       tagIds: selectedTagIds.length ? selectedTagIds : ["analysis"],
     });
-    router.replace(`/activities/${created.id}`);
+    try {
+      await waitForPersistence();
+      router.replace(`/activities/${created.id}`);
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const canSave = Boolean(title.trim() && body.trim() && selectedProjectId);
@@ -534,12 +561,17 @@ export default function NewActivityScreen() {
           { backgroundColor: theme.primary, opacity: canSave ? 1 : 0.5 },
         ]}
         onPress={handleSave}
-        disabled={persistenceStatus === "saving"}
+        disabled={isSaving || persistenceStatus === "saving"}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           {activityToEdit ? "更新" : "保存"}
         </ThemedText>
       </Pressable>
+      {saveError ? (
+        <ThemedText type="small" style={{ color: theme.danger }}>
+          {saveError}
+        </ThemedText>
+      ) : null}
     </Screen>
   );
 }

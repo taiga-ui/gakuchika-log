@@ -61,6 +61,18 @@ let reportStorageStatus: (
   error?: unknown,
 ) => void = () => undefined;
 
+type PersistenceWaiter = {
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
+const persistenceWaiters: PersistenceWaiter[] = [];
+
+export const waitForPersistence = () =>
+  new Promise<void>((resolve, reject) => {
+    persistenceWaiters.push({ resolve, reject });
+  });
+
 type AppState = {
   profile: ProfileSummary;
   activities: ActivityRecord[];
@@ -99,6 +111,14 @@ type AppState = {
     patch: Partial<Omit<GakuchikaRecord, "id">>,
   ) => void;
   saveGakuchika: (id: string) => void;
+  restoreData: (snapshot: {
+    profile: ProfileSummary;
+    activities: ActivityRecord[];
+    projects: Project[];
+    categories: CategoryMeta[];
+    tags: TagMeta[];
+    gakuchikaRecords: GakuchikaRecord[];
+  }) => void;
 };
 
 const toAppData = (state: AppState): AppData => state;
@@ -238,6 +258,7 @@ export const useAppStore = create<AppState>()(
         }),
       saveGakuchika: (id) =>
         set((state) => saveGakuchikaRecord(toAppData(state), id)),
+      restoreData: (snapshot) => set(snapshot),
       saveEs: (id, es) => {
         let changes: Partial<AppData> | null = null;
         set((state) => {
@@ -313,7 +334,15 @@ reportStorageStatus = (status, error) => {
     persistenceStatus: status,
     persistenceError: status === "error",
   });
+  if (status === "saved") {
+    while (persistenceWaiters.length) {
+      persistenceWaiters.shift()?.resolve();
+    }
+  }
   if (error) {
+    while (persistenceWaiters.length) {
+      persistenceWaiters.shift()?.reject(error);
+    }
     console.error("Failed to save local data", error);
   }
 };

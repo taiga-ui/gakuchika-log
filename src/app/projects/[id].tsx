@@ -9,7 +9,7 @@ import { Screen } from "@/components/ui/screen";
 import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, waitForPersistence } from "@/store/use-app-store";
 
 export default function ProjectDetailScreen() {
   const router = useRouter();
@@ -28,6 +28,7 @@ export default function ProjectDetailScreen() {
     [allActivities, id],
   );
   const deleteProject = useAppStore((state) => state.deleteProject);
+  const restoreData = useAppStore((state) => state.restoreData);
   if (!project)
     return (
       <Screen>
@@ -49,9 +50,16 @@ export default function ProjectDetailScreen() {
         {
           text: "削除",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
+            const snapshot = useAppStore.getState();
             deleteProject(project.id);
-            router.replace("/(tabs)/activities" as never);
+            try {
+              await waitForPersistence();
+              router.replace("/(tabs)/activities" as never);
+            } catch {
+              restoreData(snapshot);
+              Alert.alert("保存に失敗しました", "削除を再試行してください。");
+            }
           },
         },
       ],

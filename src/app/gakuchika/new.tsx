@@ -8,7 +8,11 @@ import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
+import {
+  useAppStore,
+  usePersistenceStore,
+  waitForPersistence,
+} from "@/store/use-app-store";
 
 export default function NewGakuchikaScreen() {
   const router = useRouter();
@@ -16,6 +20,7 @@ export default function NewGakuchikaScreen() {
   const activities = useAppStore((state) => state.activities);
   const projects = useAppStore((state) => state.projects);
   const addGakuchika = useAppStore((state) => state.addGakuchika);
+  const restoreData = useAppStore((state) => state.restoreData);
   const persistenceStatus = usePersistenceStore(
     (state) => state.persistenceStatus,
   );
@@ -26,6 +31,8 @@ export default function NewGakuchikaScreen() {
   const [selectedProjectId, setSelectedProjectId] = useState(
     projects[0]?.id ?? "",
   );
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const toggle = (id: string) =>
     setSelectedIds((current) =>
@@ -33,7 +40,7 @@ export default function NewGakuchikaScreen() {
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const nextTitleError = title.trim()
       ? ""
       : "ガクチカのタイトルを入力してください。";
@@ -43,8 +50,20 @@ export default function NewGakuchikaScreen() {
     setTitleError(nextTitleError);
     setActivitiesError(nextActivitiesError);
     if (nextTitleError || nextActivitiesError) return;
+    if (isSaving) return;
+    setSaveError("");
+    setIsSaving(true);
+    const snapshot = useAppStore.getState();
     const record = addGakuchika(selectedIds, title);
-    router.replace(`/gakuchika/${record.id}` as never);
+    try {
+      await waitForPersistence();
+      router.replace(`/gakuchika/${record.id}` as never);
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -167,7 +186,7 @@ export default function NewGakuchikaScreen() {
           </ThemedText>
         ) : null}
         <Pressable
-          disabled={persistenceStatus === "saving"}
+          disabled={isSaving || persistenceStatus === "saving"}
           onPress={handleAdd}
           style={[
             styles.primaryButton,
@@ -182,6 +201,11 @@ export default function NewGakuchikaScreen() {
           <ThemedText style={styles.buttonText}>追加する</ThemedText>
           <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
         </Pressable>
+        {saveError ? (
+          <ThemedText type="small" style={{ color: theme.danger }}>
+            {saveError}
+          </ThemedText>
+        ) : null}
       </View>
     </Screen>
   );

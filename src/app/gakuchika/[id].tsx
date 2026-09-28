@@ -15,7 +15,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
+import {
+  useAppStore,
+  usePersistenceStore,
+  waitForPersistence,
+} from "@/store/use-app-store";
 import { ES_DEFAULT_MAX_CHARACTERS } from "@/types/domain";
 
 type ReflectionKey =
@@ -78,6 +82,7 @@ export default function GakuchikaDetailScreen() {
   const updateGakuchika = useAppStore((state) => state.updateGakuchika);
   const saveGakuchika = useAppStore((state) => state.saveGakuchika);
   const saveEsToStore = useAppStore((state) => state.saveEs);
+  const restoreData = useAppStore((state) => state.restoreData);
   const persistenceStatus = usePersistenceStore(
     (state) => state.persistenceStatus,
   );
@@ -89,6 +94,9 @@ export default function GakuchikaDetailScreen() {
   );
   const [content, setContent] = useState(record?.es?.content || "");
   const [esError, setEsError] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!record)
     return (
@@ -138,7 +146,12 @@ export default function GakuchikaDetailScreen() {
   const effectiveMaxCharacters =
     Number(maxCharacters) || ES_DEFAULT_MAX_CHARACTERS;
   const isOverLimit = count > effectiveMaxCharacters;
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSaving) return;
+    setSaveError("");
+    setSaveSuccess(false);
+    setIsSaving(true);
+    const snapshot = useAppStore.getState();
     if (
       !saveEs({
         company,
@@ -147,10 +160,36 @@ export default function GakuchikaDetailScreen() {
         content,
       })
     ) {
+      setIsSaving(false);
+      return;
+    }
+    try {
+      await waitForPersistence();
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+      setIsSaving(false);
       return;
     }
     updateGakuchika(record.id, { reflection });
+    try {
+      await waitForPersistence();
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+      setIsSaving(false);
+      return;
+    }
     saveGakuchika(record.id);
+    try {
+      await waitForPersistence();
+      setSaveSuccess(true);
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -320,7 +359,7 @@ export default function GakuchikaDetailScreen() {
         </View>
         <Pressable
           onPress={handleSave}
-          disabled={isOverLimit || persistenceStatus === "saving"}
+          disabled={isOverLimit || isSaving || persistenceStatus === "saving"}
           style={[
             styles.saveButton,
             {
@@ -337,6 +376,16 @@ export default function GakuchikaDetailScreen() {
             {record.savedAt ? "変更を保存" : "このガクチカを保存"}
           </ThemedText>
         </Pressable>
+        {saveSuccess ? (
+          <ThemedText type="small" style={{ color: theme.success }}>
+            保存しました。
+          </ThemedText>
+        ) : null}
+        {saveError ? (
+          <ThemedText type="small" style={{ color: theme.danger }}>
+            {saveError}
+          </ThemedText>
+        ) : null}
       </Screen>
     </KeyboardAvoidingView>
   );
