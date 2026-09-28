@@ -10,7 +10,11 @@ import { TagChip } from "@/components/ui/tag-chip";
 import type { ActivityCategoryKey } from "@/constants/categories";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore, usePersistenceStore } from "@/store/use-app-store";
+import {
+  useAppStore,
+  usePersistenceStore,
+  waitForPersistence,
+} from "@/store/use-app-store";
 
 export default function NewProjectScreen() {
   const router = useRouter();
@@ -23,6 +27,7 @@ export default function NewProjectScreen() {
   const updateProject = useAppStore((state) => state.updateProject);
   const categories = useAppStore((state) => state.categories);
   const addCategory = useAppStore((state) => state.addCategory);
+  const restoreData = useAppStore((state) => state.restoreData);
   const [name, setName] = useState(() => projectToEdit?.name ?? "");
   const [description, setDescription] = useState(
     () => projectToEdit?.description ?? "",
@@ -36,14 +41,20 @@ export default function NewProjectScreen() {
   const persistenceStatus = usePersistenceStore(
     (state) => state.persistenceStatus,
   );
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       setNameError("プロジェクト名を入力してください。");
       return;
     }
+    if (isSaving) return;
     setNameError("");
+    setSaveError("");
+    setIsSaving(true);
+    const snapshot = useAppStore.getState();
     const details = {
       description: description.trim() || undefined,
     };
@@ -53,11 +64,27 @@ export default function NewProjectScreen() {
         category,
         ...details,
       });
-      router.replace(`/projects/${projectToEdit.id}` as never);
+      try {
+        await waitForPersistence();
+        router.replace(`/projects/${projectToEdit.id}` as never);
+      } catch {
+        restoreData(snapshot);
+        setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+      } finally {
+        setIsSaving(false);
+      }
       return;
     }
     addProject(trimmedName, category, details);
-    router.back();
+    try {
+      await waitForPersistence();
+      router.back();
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddCategory = () => {
@@ -196,12 +223,17 @@ export default function NewProjectScreen() {
           { backgroundColor: theme.primary, opacity: name.trim() ? 1 : 0.5 },
         ]}
         onPress={handleSave}
-        disabled={persistenceStatus === "saving"}
+        disabled={isSaving || persistenceStatus === "saving"}
       >
         <ThemedText type="smallBold" style={{ color: theme.textInverse }}>
           保存
         </ThemedText>
       </Pressable>
+      {saveError ? (
+        <ThemedText type="small" style={{ color: theme.danger }}>
+          {saveError}
+        </ThemedText>
+      ) : null}
     </Screen>
   );
 }

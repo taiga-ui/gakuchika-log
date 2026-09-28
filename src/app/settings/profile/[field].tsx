@@ -14,7 +14,7 @@ import {
 } from "@/constants/profile";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, waitForPersistence } from "@/store/use-app-store";
 
 const isProfileField = (value: string): value is ProfileField =>
   ["name", "school", "faculty", "grade", "target"].includes(value);
@@ -26,6 +26,7 @@ export default function ProfileFieldEditScreen() {
   const field = isProfileField(rawField) ? rawField : "name";
   const profile = useAppStore((state) => state.profile);
   const updateProfile = useAppStore((state) => state.updateProfile);
+  const restoreData = useAppStore((state) => state.restoreData);
   const initialValue = profile[field];
   const [text, setText] = useState(
     typeof initialValue === "string" ? initialValue : "",
@@ -34,12 +35,26 @@ export default function ProfileFieldEditScreen() {
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>(
     profile.target,
   );
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSaving) return;
+    const snapshot = useAppStore.getState();
     if (field === "target") updateProfile({ target: selectedIndustries });
     else if (field === "grade") updateProfile({ grade: selectedGrade });
     else updateProfile({ [field]: text.trim() } as Partial<typeof profile>);
-    router.back();
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await waitForPersistence();
+      router.back();
+    } catch {
+      restoreData(snapshot);
+      setSaveError("保存に失敗しました。内容を確認して再試行してください。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const toggleIndustry = (industry: string) => {
@@ -99,12 +114,18 @@ export default function ProfileFieldEditScreen() {
 
       <Pressable
         onPress={handleSave}
+        disabled={isSaving}
         style={[styles.saveButton, { backgroundColor: theme.primary }]}
       >
         <ThemedText type="smallBold" style={{ color: "#FFFFFF" }}>
           保存
         </ThemedText>
       </Pressable>
+      {saveError ? (
+        <ThemedText type="small" style={{ color: theme.danger }}>
+          {saveError}
+        </ThemedText>
+      ) : null}
     </Screen>
   );
 }

@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { useAppStore } from "@/store/use-app-store";
+import { useAppStore, waitForPersistence } from "@/store/use-app-store";
 
 function SectionBlock({
   title,
@@ -39,6 +39,7 @@ export default function ActivityDetailScreen() {
   const tags = useAppStore((state) => state.tags);
   const projects = useAppStore((state) => state.projects);
   const deleteActivity = useAppStore((state) => state.deleteActivity);
+  const restoreData = useAppStore((state) => state.restoreData);
 
   const activityId = Array.isArray(params.id) ? params.id[0] : params.id;
   const activity = activities.find((item) => item.id === activityId);
@@ -67,9 +68,16 @@ export default function ActivityDetailScreen() {
         {
           text: "削除",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
+            const snapshot = useAppStore.getState();
             deleteActivity(activity.id);
-            router.back();
+            try {
+              await waitForPersistence();
+              router.back();
+            } catch {
+              restoreData(snapshot);
+              Alert.alert("保存に失敗しました", "削除を再試行してください。");
+            }
           },
         },
       ],
