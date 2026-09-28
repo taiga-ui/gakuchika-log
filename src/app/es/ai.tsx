@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +14,8 @@ import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { aiSearchService } from "@/services/ai-search-service";
+import { AiSearchError, type AiSearchState } from "@/types/ai-search";
 
 const suggestionItems = [
   "リーダーシップを発揮した経験",
@@ -25,6 +27,38 @@ export default function AISearchScreen() {
   const theme = useTheme();
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
+  const [query, setQuery] = useState("");
+  const [searchState, setSearchState] = useState<AiSearchState>({
+    status: "idle",
+    query: "",
+  });
+
+  const submitSearch = async () => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery || searchState.status === "loading") return;
+
+    setSearchState({ status: "loading", query: normalizedQuery });
+    try {
+      const response = await aiSearchService.search({
+        query: normalizedQuery,
+      });
+      setSearchState({
+        status: "success",
+        query: normalizedQuery,
+        response,
+      });
+    } catch (error) {
+      const searchError =
+        error instanceof AiSearchError
+          ? error
+          : new AiSearchError("request-failed", "AI検索に失敗しました。");
+      setSearchState({
+        status: "error",
+        query: normalizedQuery,
+        error: searchError,
+      });
+    }
+  };
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -64,7 +98,11 @@ export default function AISearchScreen() {
 
           <View style={styles.suggestionList}>
             {suggestionItems.map((item) => (
-              <Pressable key={item} style={styles.suggestionRow}>
+              <Pressable
+                key={item}
+                style={styles.suggestionRow}
+                onPress={() => setQuery(item)}
+              >
                 <Ionicons
                   name="search-outline"
                   size={24}
@@ -79,6 +117,31 @@ export default function AISearchScreen() {
               </Pressable>
             ))}
           </View>
+
+          {searchState.status === "loading" && (
+            <ThemedText
+              type="small"
+              style={[styles.statusText, { color: theme.textSecondary }]}
+            >
+              検索しています...
+            </ThemedText>
+          )}
+          {searchState.status === "error" && (
+            <ThemedText
+              type="small"
+              style={[styles.statusText, { color: theme.textSecondary }]}
+            >
+              {searchState.error.message}
+            </ThemedText>
+          )}
+          {searchState.status === "success" && (
+            <ThemedText
+              type="small"
+              style={[styles.statusText, { color: theme.textSecondary }]}
+            >
+              {searchState.response.results.length}件の結果
+            </ThemedText>
+          )}
 
           <View style={styles.searchInputContainer}>
             <View
@@ -98,13 +161,22 @@ export default function AISearchScreen() {
                 placeholder="AI検索"
                 placeholderTextColor={theme.textTertiary}
                 style={[styles.searchInput, { color: theme.text }]}
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={submitSearch}
+                returnKeyType="search"
               />
 
               <Pressable
                 style={[
                   styles.submitButton,
-                  { backgroundColor: theme.primary },
+                  {
+                    backgroundColor: theme.primary,
+                    opacity: searchState.status === "loading" ? 0.5 : 1,
+                  },
                 ]}
+                onPress={submitSearch}
+                disabled={searchState.status === "loading"}
               >
                 <Ionicons name="arrow-up" size={26} color={theme.textInverse} />
               </Pressable>
@@ -204,6 +276,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 28,
     paddingVertical: 0,
+  },
+  statusText: {
+    marginTop: Spacing.three,
+    textAlign: "center",
   },
   submitButton: {
     width: 46,
