@@ -45,184 +45,176 @@ export default function ActivitiesScreen() {
   return (
     <Screen scroll={false}>
       <View style={styles.container}>
+        <View style={styles.headerInner}>
+          <View style={styles.topBar}>
+            <View style={styles.brandWrap}>
+              <View style={styles.avatar}>
+                <ThemedText type="smallBold" style={{ color: "#4E4B46" }}>
+                  田
+                </ThemedText>
+              </View>
+              <ThemedText
+                type="smallBold"
+                style={[styles.brandText, { color: theme.primary }]}
+              >
+                ガクチカログ
+              </ThemedText>
+            </View>
+            <Pressable
+              style={[
+                styles.settingsButton,
+                { backgroundColor: theme.surface },
+              ]}
+              onPress={() => router.push("/settings" as never)}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={28}
+                color={theme.primary}
+              />
+            </Pressable>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+          >
+            {[
+              { label: "すべて", value: "all" },
+              ...categories.map((category) => ({
+                label: category.label,
+                value: category.key,
+              })),
+            ].map((item) => (
+              <Pressable
+                key={item.value}
+                onPress={() => setSelectedCategory(item.value)}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor:
+                      item.value === selectedCategory
+                        ? theme.primary
+                        : theme.surfaceMuted,
+                    borderColor:
+                      item.value === selectedCategory
+                        ? theme.primary
+                        : Colors.light.border,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="smallBold"
+                  style={{
+                    color:
+                      item.value === selectedCategory
+                        ? "#FFFFFF"
+                        : theme.textSecondary,
+                  }}
+                >
+                  {item.label}
+                </ThemedText>
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityLabel="カテゴリを追加"
+              onPress={() => setIsCategoryModalVisible(true)}
+              style={[
+                styles.addCategoryChip,
+                {
+                  backgroundColor: theme.surfaceMuted,
+                  borderColor: Colors.light.border,
+                },
+              ]}
+            >
+              <Ionicons name="add" size={20} color={theme.textSecondary} />
+            </Pressable>
+          </ScrollView>
+        </View>
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.inner}>
-            <View style={styles.topBar}>
-              <View style={styles.brandWrap}>
-                <View style={styles.avatar}>
-                  <ThemedText type="smallBold" style={{ color: "#4E4B46" }}>
-                    田
-                  </ThemedText>
-                </View>
-                <ThemedText
-                  type="smallBold"
-                  style={[styles.brandText, { color: theme.primary }]}
-                >
-                  ガクチカログ
-                </ThemedText>
-              </View>
-              <Pressable
-                style={[
-                  styles.settingsButton,
-                  { backgroundColor: theme.surface },
-                ]}
-                onPress={() => router.push("/settings" as never)}
-              >
-                <Ionicons
-                  name="settings-outline"
-                  size={28}
-                  color={theme.primary}
-                />
-              </Pressable>
-            </View>
-            <>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterRow}
-              >
-                {[
-                  { label: "すべて", value: "all" },
-                  ...categories.map((category) => ({
-                    label: category.label,
-                    value: category.key,
-                  })),
-                ].map((item) => (
-                  <Pressable
-                    key={item.value}
-                    onPress={() => setSelectedCategory(item.value)}
-                    style={[
-                      styles.filterChip,
-                      {
-                        backgroundColor:
-                          item.value === selectedCategory
-                            ? theme.primary
-                            : theme.surfaceMuted,
-                        borderColor:
-                          item.value === selectedCategory
-                            ? theme.primary
-                            : Colors.light.border,
-                      },
-                    ]}
-                  >
-                    <ThemedText
-                      type="smallBold"
-                      style={{
-                        color:
-                          item.value === selectedCategory
-                            ? "#FFFFFF"
-                            : theme.textSecondary,
-                      }}
+            <Pressable
+              style={[styles.addProjectButton, { borderColor: theme.primary }]}
+              onPress={() => router.push("/projects/new" as never)}
+            >
+              <Ionicons name="add" size={20} color={theme.primary} />
+              <ThemedText type="smallBold" style={{ color: theme.primary }}>
+                プロジェクトを追加
+              </ThemedText>
+            </Pressable>
+            {visibleProjects.length ? (
+              <View style={styles.list}>
+                {visibleProjects.map((project) => {
+                  const category =
+                    categories.find((item) => item.key === project.category) ??
+                    CATEGORY_MAP[project.category] ??
+                    ACTIVITY_CATEGORIES[0];
+                  const count = activities.filter(
+                    (activity) => activity.projectId === project.id,
+                  ).length;
+                  return (
+                    <Pressable
+                      key={project.id}
+                      onPress={() =>
+                        router.push(`/projects/${project.id}` as never)
+                      }
+                      style={[
+                        styles.projectCard,
+                        { backgroundColor: theme.surface },
+                      ]}
                     >
-                      {item.label}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-                <Pressable
-                  accessibilityLabel="カテゴリを追加"
-                  onPress={() => setIsCategoryModalVisible(true)}
-                  style={[
-                    styles.addCategoryChip,
-                    {
-                      backgroundColor: theme.surfaceMuted,
-                      borderColor: Colors.light.border,
-                    },
-                  ]}
-                >
-                  <Ionicons name="add" size={20} color={theme.textSecondary} />
-                </Pressable>
-              </ScrollView>
-              <Pressable
-                style={[
-                  styles.addProjectButton,
-                  { borderColor: theme.primary },
-                ]}
-                onPress={() => router.push("/projects/new" as never)}
-              >
-                <Ionicons name="add" size={20} color={theme.primary} />
-                <ThemedText type="smallBold" style={{ color: theme.primary }}>
-                  プロジェクトを追加
-                </ThemedText>
-              </Pressable>
-              {visibleProjects.length ? (
-                <View style={styles.list}>
-                  {visibleProjects.map((project) => {
-                    const category =
-                      categories.find(
-                        (item) => item.key === project.category,
-                      ) ??
-                      CATEGORY_MAP[project.category] ??
-                      ACTIVITY_CATEGORIES[0];
-                    const count = activities.filter(
-                      (activity) => activity.projectId === project.id,
-                    ).length;
-                    return (
-                      <Pressable
-                        key={project.id}
-                        onPress={() =>
-                          router.push(`/projects/${project.id}` as never)
-                        }
-                        style={[
-                          styles.projectCard,
-                          { backgroundColor: theme.surface },
-                        ]}
-                      >
-                        <View style={styles.projectHeader}>
-                          <View
-                            style={[
-                              styles.badge,
-                              { backgroundColor: category.softColor },
-                            ]}
-                          >
-                            <ThemedText
-                              type="smallBold"
-                              style={{ color: category.color }}
-                            >
-                              {category.label}
-                            </ThemedText>
-                          </View>
-                          <Ionicons
-                            name="chevron-forward"
-                            size={22}
-                            color={theme.textTertiary}
-                          />
-                        </View>
-                        <ThemedText
-                          type="subtitle"
-                          style={{ color: theme.text }}
+                      <View style={styles.projectHeader}>
+                        <View
+                          style={[
+                            styles.badge,
+                            { backgroundColor: category.softColor },
+                          ]}
                         >
-                          {project.name}
-                        </ThemedText>
-                        {project.description ? (
                           <ThemedText
-                            numberOfLines={2}
-                            style={{ color: theme.textSecondary }}
+                            type="smallBold"
+                            style={{ color: category.color }}
                           >
-                            {project.description}
+                            {category.label}
                           </ThemedText>
-                        ) : null}
+                        </View>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={22}
+                          color={theme.textTertiary}
+                        />
+                      </View>
+                      <ThemedText type="subtitle" style={{ color: theme.text }}>
+                        {project.name}
+                      </ThemedText>
+                      {project.description ? (
                         <ThemedText
-                          type="small"
-                          style={{ color: theme.textTertiary }}
+                          numberOfLines={2}
+                          style={{ color: theme.textSecondary }}
                         >
-                          活動記録 {count}件
+                          {project.description}
                         </ThemedText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : (
-                <EmptyState
-                  icon="folder-open-outline"
-                  title="プロジェクトがありません"
-                  description="このカテゴリにプロジェクトを追加して、活動記録をまとめましょう。"
-                />
-              )}
-            </>
+                      ) : null}
+                      <ThemedText
+                        type="small"
+                        style={{ color: theme.textTertiary }}
+                      >
+                        活動記録 {count}件
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : (
+              <EmptyState
+                icon="folder-open-outline"
+                title="プロジェクトがありません"
+                description="このカテゴリにプロジェクトを追加して、活動記録をまとめましょう。"
+              />
+            )}
           </View>
         </ScrollView>
         <Modal
@@ -296,6 +288,12 @@ export default function ActivitiesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { flexGrow: 1 },
+  headerInner: {
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.five,
+  },
   inner: {
     width: "100%",
     maxWidth: MaxContentWidth,

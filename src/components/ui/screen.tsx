@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,18 +12,40 @@ type ScreenProps = {
 
 export function Screen({ children, scroll = true }: ScreenProps) {
   const theme = useTheme();
+  const childArray = Children.toArray(children);
 
   const content = scroll ? (
-    <ScrollView
-      contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={[
-        styles.scrollContent,
-        { backgroundColor: theme.background },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.inner}>{children}</View>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      {childArray.length > 1 ? (
+        <View
+          style={[styles.fixedHeader, { backgroundColor: theme.background }]}
+        >
+          <View style={styles.inner}>{childArray[0]}</View>
+        </View>
+      ) : null}
+      <ScrollView
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={[
+          styles.scrollContent,
+          { backgroundColor: theme.background },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {childArray
+          .slice(childArray.length > 1 ? 1 : 0)
+          .map((child, index, contentChildren) => (
+            <View
+              key={index}
+              style={[
+                styles.inner,
+                index === contentChildren.length - 1 && styles.lastChild,
+              ]}
+            >
+              {child}
+            </View>
+          ))}
+      </ScrollView>
+    </View>
   ) : (
     <View style={[styles.staticContent, { backgroundColor: theme.background }]}>
       {children}
@@ -55,6 +77,11 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: "center",
     paddingHorizontal: Spacing.five,
+  },
+  fixedHeader: {
+    flexShrink: 0,
+  },
+  lastChild: {
     paddingBottom: Spacing.eight,
   },
 });
