@@ -8,6 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "jest --runInBand",
     "reset-project": "node ./scripts/reset-project.js"
   },
   "dependencies": {
@@ -39,7 +40,10 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.4",
+    "jest": "^30.5.2",
+    "jest-expo": "~57.0.0",
     "typescript": "~6.0.3"
   }
 }
