@@ -167,7 +167,7 @@ export default function NewActivityScreen() {
       title: title.trim() ? "" : "タイトルを入力してください。",
       body: body.trim() ? "" : "内容を入力してください。",
       date: date.trim() ? "" : "日付を選択してください。",
-      project: project ? "" : "Projectを選択してください。",
+      project: project ? "" : "プロジェクトを選択してください。",
     };
     setErrors(nextErrors);
     if (!title.trim() || !body.trim() || !date.trim() || !project) {
