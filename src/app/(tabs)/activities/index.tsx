@@ -123,7 +123,7 @@ export default function ActivitiesScreen() {
                   </Pressable>
                 ))}
                 <Pressable
-                  accessibilityLabel="カテゴリーを追加"
+                  accessibilityLabel="カテゴリを追加"
                   onPress={() => setIsCategoryModalVisible(true)}
                   style={[
                     styles.addCategoryChip,
@@ -236,10 +236,10 @@ export default function ActivitiesScreen() {
               style={[styles.modalCard, { backgroundColor: theme.surface }]}
             >
               <ThemedText type="subtitle" style={{ color: theme.text }}>
-                カテゴリーを追加
+                カテゴリを追加
               </ThemedText>
               <FormField
-                label="カテゴリー名"
+                label="カテゴリ名"
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
                 placeholder="例: 学外活動"

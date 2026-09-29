@@ -79,7 +79,7 @@ export default function SearchScreen() {
           type="smallBold"
           style={[styles.sectionTitle, { color: theme.text }]}
         >
-          カテゴリーから探す
+          カテゴリから探す
         </ThemedText>
 
         <View style={styles.categoryGrid}>
