@@ -14,8 +14,8 @@ import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { aiSearchService } from "@/services/ai-search-service";
-import { AiSearchError, type AiSearchState } from "@/types/ai-search";
+import { aiSearchService, runAiSearch } from "@/services/ai-search-service";
+import type { AiSearchState } from "@/types/ai-search";
 
 const suggestionItems = [
   "リーダーシップを発揮した経験",
@@ -37,27 +37,7 @@ export default function AISearchScreen() {
     const normalizedQuery = query.trim();
     if (!normalizedQuery || searchState.status === "loading") return;
 
-    setSearchState({ status: "loading", query: normalizedQuery });
-    try {
-      const response = await aiSearchService.search({
-        query: normalizedQuery,
-      });
-      setSearchState({
-        status: "success",
-        query: normalizedQuery,
-        response,
-      });
-    } catch (error) {
-      const searchError =
-        error instanceof AiSearchError
-          ? error
-          : new AiSearchError("request-failed", "AI検索に失敗しました。");
-      setSearchState({
-        status: "error",
-        query: normalizedQuery,
-        error: searchError,
-      });
-    }
+    await runAiSearch(aiSearchService, normalizedQuery, setSearchState);
   };
 
   useEffect(() => {
