@@ -1,15 +1,5 @@
 import { LOCAL_OWNER_ID } from "@/constants/owner";
-import {
-  addActivity,
-  addProject,
-  deleteActivity,
-  deleteProject,
-  saveEs,
-  saveGakuchika,
-  updateActivity,
-  updateProject,
-  type AppData,
-} from "@/data/app-repository";
+import { createAppRepository, type AppData } from "@/data/app-repository";
 import type { ActivityRecord, GakuchikaRecord, Project } from "@/types/domain";
 
 const makeProject = (
@@ -74,12 +64,18 @@ const makeData = (overrides: Partial<AppData> = {}): AppData => ({
 });
 
 describe("app repository", () => {
+  const repository = createAppRepository(LOCAL_OWNER_ID);
+
   it("performs project and activity CRUD", () => {
-    const projectResult = addProject("研究プロジェクト", "research", {
-      description: "説明",
-    });
+    const projectResult = repository.addProject(
+      "研究プロジェクト",
+      "research",
+      {
+        description: "説明",
+      },
+    );
     const withProject = makeData({ projects: [projectResult.project] });
-    const activityResult = addActivity(withProject, {
+    const activityResult = repository.addActivity(withProject, {
       projectId: projectResult.project.id,
       title: "実験を記録",
       body: "本文",
@@ -96,7 +92,7 @@ describe("app repository", () => {
     };
     const updated = {
       ...withActivity,
-      ...updateActivity(withActivity, activityResult.record.id, {
+      ...repository.updateActivity(withActivity, activityResult.record.id, {
         title: "更新した記録",
       }),
     };
@@ -119,7 +115,7 @@ describe("app repository", () => {
       ],
     });
 
-    const next = { ...data, ...deleteProject(data, project.id) };
+    const next = { ...data, ...repository.deleteProject(data, project.id) };
 
     expect(next.projects).toEqual([otherProject]);
     expect(next.activities).toEqual([keptActivity]);
@@ -140,7 +136,7 @@ describe("app repository", () => {
       ],
     });
 
-    const next = { ...data, ...deleteActivity(data, activity.id) };
+    const next = { ...data, ...repository.deleteActivity(data, activity.id) };
 
     expect(next.activities).toEqual([]);
     expect(next.gakuchikaRecords[0].relatedActivityIds).toEqual(["activity-2"]);
@@ -157,7 +153,7 @@ describe("app repository", () => {
 
     const next = {
       ...data,
-      ...updateProject(data, project.id, { category: "volunteer" }),
+      ...repository.updateProject(data, project.id, { category: "volunteer" }),
     };
 
     expect(next.activities[0].categoryKey).toBe("volunteer");
@@ -175,10 +171,10 @@ describe("app repository", () => {
     };
 
     expect(
-      saveEs(data, "gakuchika-1", { ...es, content: "😀😀😀😀" }),
+      repository.saveEs(data, "gakuchika-1", { ...es, content: "😀😀😀😀" }),
     ).not.toBeNull();
     expect(
-      saveEs(data, "gakuchika-1", { ...es, content: "😀😀😀😀😀" }),
+      repository.saveEs(data, "gakuchika-1", { ...es, content: "😀😀😀😀😀" }),
     ).toBeNull();
   });
 
@@ -187,11 +183,18 @@ describe("app repository", () => {
     const other = makeGakuchika("gakuchika-2", []);
     const data = makeData({ gakuchikaRecords: [draft, other] });
 
-    const next = { ...data, ...saveGakuchika(data, draft.id) };
+    const next = { ...data, ...repository.saveGakuchika(data, draft.id) };
 
     expect(next.gakuchikaRecords[0]).toEqual(
       expect.objectContaining({ id: draft.id, savedAt: expect.any(String) }),
     );
     expect(next.gakuchikaRecords[1]).toEqual(other);
+  });
+
+  it("uses the ownerId supplied when creating the repository", () => {
+    const otherRepository = createAppRepository("another-user");
+    const result = otherRepository.addProject("別ユーザー", "research");
+
+    expect(result.project.ownerId).toBe("another-user");
   });
 });
