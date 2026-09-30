@@ -22,7 +22,7 @@ export default function AlbumsScreen() {
       <SectionHeader
         title="アルバム"
         subtitle="写真・成果物・画面キャプチャをまとめる"
-        actionLabel="活動を追加"
+        actionLabel="活動を記録"
         onActionPress={() => router.push("/activities/new")}
       />
 
