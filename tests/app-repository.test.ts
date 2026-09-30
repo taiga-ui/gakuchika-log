@@ -5,6 +5,7 @@ import {
   deleteActivity,
   deleteProject,
   saveEs,
+  saveGakuchika,
   updateActivity,
   updateProject,
   type AppData,
@@ -179,5 +180,18 @@ describe("app repository", () => {
     expect(
       saveEs(data, "gakuchika-1", { ...es, content: "😀😀😀😀😀" }),
     ).toBeNull();
+  });
+
+  it("marks only the owned gakuchika record as saved", () => {
+    const draft = makeGakuchika("gakuchika-1", []);
+    const other = makeGakuchika("gakuchika-2", []);
+    const data = makeData({ gakuchikaRecords: [draft, other] });
+
+    const next = { ...data, ...saveGakuchika(data, draft.id) };
+
+    expect(next.gakuchikaRecords[0]).toEqual(
+      expect.objectContaining({ id: draft.id, savedAt: expect.any(String) }),
+    );
+    expect(next.gakuchikaRecords[1]).toEqual(other);
   });
 });
