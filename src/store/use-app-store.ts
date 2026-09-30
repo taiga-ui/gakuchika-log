@@ -60,6 +60,7 @@ export const usePersistenceStore = create<PersistenceRuntimeState>(() => ({
 let reportStorageStatus: (
   status: PersistenceStatus,
   error?: unknown,
+  operationId?: number,
 ) => void = () => undefined;
 
 type PersistenceWaiter = {
@@ -67,11 +68,36 @@ type PersistenceWaiter = {
   reject: (error: unknown) => void;
 };
 
-const persistenceWaiters: PersistenceWaiter[] = [];
+type PersistenceOperation = {
+  status: "saving" | "saved" | "error";
+  error?: unknown;
+};
+
+const persistenceOperations = new Map<number, PersistenceOperation>();
+const persistenceWaiters = new Map<number, PersistenceWaiter[]>();
+let latestPersistenceOperationId: number | undefined;
 
 export const waitForPersistence = () =>
   new Promise<void>((resolve, reject) => {
-    persistenceWaiters.push({ resolve, reject });
+    const operationId = latestPersistenceOperationId;
+    if (operationId === undefined) {
+      resolve();
+      return;
+    }
+
+    const operation = persistenceOperations.get(operationId);
+    if (operation?.status === "saved") {
+      resolve();
+      return;
+    }
+    if (operation?.status === "error") {
+      reject(operation.error);
+      return;
+    }
+
+    const waiters = persistenceWaiters.get(operationId) ?? [];
+    waiters.push({ resolve, reject });
+    persistenceWaiters.set(operationId, waiters);
   });
 
 type AppState = {
@@ -340,20 +366,30 @@ export const useAppStore = create<AppState>()(
   ),
 );
 
-reportStorageStatus = (status, error) => {
+reportStorageStatus = (status, error, operationId) => {
   usePersistenceStore.setState({
     persistenceStatus: status,
     persistenceError: status === "error",
   });
-  if (status === "saved") {
-    while (persistenceWaiters.length) {
-      persistenceWaiters.shift()?.resolve();
-    }
+
+  if (status === "idle" || operationId === undefined) return;
+
+  if (status === "saving") {
+    latestPersistenceOperationId = operationId;
   }
-  if (error) {
-    while (persistenceWaiters.length) {
-      persistenceWaiters.shift()?.reject(error);
-    }
+  persistenceOperations.set(operationId, { status, error });
+  const waiters = persistenceWaiters.get(operationId);
+  if (!waiters) {
+    if (error) console.error("Failed to save local data", error);
+    return;
+  }
+
+  persistenceWaiters.delete(operationId);
+  if (status === "saved") {
+    waiters.forEach(({ resolve }) => resolve());
+  }
+  if (status === "error") {
+    waiters.forEach(({ reject }) => reject(error));
     console.error("Failed to save local data", error);
   }
 };
