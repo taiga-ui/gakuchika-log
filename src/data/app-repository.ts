@@ -1,5 +1,4 @@
 import { ACTIVITY_CATEGORIES, type CategoryMeta } from "@/constants/categories";
-import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type { TagId, TagMeta } from "@/constants/tags";
 import type {
   ActivityRecord,
@@ -24,6 +23,45 @@ export type AppData = {
   gakuchikaRecords: GakuchikaRecord[];
 };
 
+export type AppRepository = {
+  addActivity: (
+    data: AppData,
+    draft: ActivityDraft,
+  ) => {
+    record: ActivityRecord;
+    changes: Partial<AppData>;
+  };
+  updateActivity: (
+    data: AppData,
+    id: string,
+    patch: Partial<ActivityRecord>,
+  ) => Partial<AppData>;
+  deleteActivity: (data: AppData, id: string) => Partial<AppData>;
+  addProject: (
+    name: string,
+    category: Project["category"],
+    details?: ProjectDetails,
+  ) => { project: Project; changes: Partial<AppData> };
+  updateProject: (
+    data: AppData,
+    id: string,
+    patch: Partial<Pick<Project, "name" | "description" | "category">>,
+  ) => Partial<AppData>;
+  deleteProject: (data: AppData, id: string) => Partial<AppData>;
+  addGakuchika: (
+    data: AppData,
+    activityIds: string[],
+    title?: string,
+  ) => { record: GakuchikaRecord; changes: Partial<AppData> };
+  updateGakuchika: (
+    data: AppData,
+    id: string,
+    patch: Partial<Omit<GakuchikaRecord, "id">>,
+  ) => Partial<AppData> | null;
+  saveGakuchika: (data: AppData, id: string) => Partial<AppData>;
+  saveEs: (data: AppData, id: string, es: EsDraft) => Partial<AppData> | null;
+};
+
 const createId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -32,158 +70,216 @@ const isValidEs = (es: Pick<EsData, "maxCharacters" | "content">) =>
   es.maxCharacters > 0 &&
   [...es.content].length <= es.maxCharacters;
 
-export const addActivity = (
-  data: AppData,
-  draft: ActivityDraft,
-): { record: ActivityRecord; changes: Partial<AppData> } => {
-  const now = new Date();
-  const project = data.projects.find((item) => item.id === draft.projectId);
-  const record: ActivityRecord = {
-    ...draft,
-    ownerId: LOCAL_OWNER_ID,
-    id: createId("activity"),
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString(),
-    date: draft.date || toIsoDate(now),
-    ...(project ? { categoryKey: project.category } : {}),
-  };
-  return { record, changes: { activities: [record, ...data.activities] } };
-};
-
-export const updateActivity = (
-  data: AppData,
-  id: string,
-  patch: Partial<ActivityRecord>,
-): Partial<AppData> => {
-  const current = data.activities.find(
-    (activity) => activity.id === id && activity.ownerId === LOCAL_OWNER_ID,
-  );
-  const project = data.projects.find(
-    (item) =>
-      item.id === (patch.projectId ?? current?.projectId) &&
-      item.ownerId === LOCAL_OWNER_ID,
-  );
-  return {
-    activities: data.activities.map((activity) =>
-      activity.id === id && activity.ownerId === LOCAL_OWNER_ID
-        ? {
-            ...activity,
-            ...patch,
-            ownerId: LOCAL_OWNER_ID,
-            ...(project ? { categoryKey: project.category } : {}),
-            updatedAt: new Date().toISOString(),
-          }
-        : activity,
-    ),
-  };
-};
-
-export const deleteActivity = (
-  data: AppData,
-  id: string,
-): Partial<AppData> => ({
-  activities: data.activities.filter(
-    (activity) => !(activity.id === id && activity.ownerId === LOCAL_OWNER_ID),
-  ),
-  gakuchikaRecords: data.gakuchikaRecords.map((record) =>
-    record.ownerId === LOCAL_OWNER_ID
-      ? {
-          ...record,
-          relatedActivityIds: record.relatedActivityIds.filter(
-            (activityId) => activityId !== id,
-          ),
-          ...(record.relatedActivityIds.includes(id)
-            ? { updatedAt: new Date().toISOString() }
-            : {}),
-        }
-      : record,
-  ),
-});
-
-export const addProject = (
-  name: string,
-  category: Project["category"],
-  details?: ProjectDetails,
-): { project: Project; changes: Partial<AppData> } => {
-  const now = new Date().toISOString();
-  const project: Project = {
-    id: createId("project"),
-    ownerId: LOCAL_OWNER_ID,
-    name,
-    category,
-    ...details,
-    createdAt: now,
-    updatedAt: now,
-  };
-  return { project, changes: { projects: [project] } };
-};
-
-export const updateProject = (
-  data: AppData,
-  id: string,
-  patch: Partial<Pick<Project, "name" | "description" | "category">>,
-): Partial<AppData> => {
-  const now = new Date().toISOString();
-  const projects = data.projects.map((project) =>
-    project.id === id && project.ownerId === LOCAL_OWNER_ID
-      ? { ...project, ...patch, updatedAt: now }
-      : project,
-  );
-  const nextProject = projects.find(
-    (project) => project.id === id && project.ownerId === LOCAL_OWNER_ID,
-  );
-  return {
-    projects,
-    ...(nextProject
-      ? {
-          activities: data.activities.map((activity) =>
-            activity.projectId === id && activity.ownerId === LOCAL_OWNER_ID
-              ? {
-                  ...activity,
-                  categoryKey: nextProject.category,
-                  updatedAt: now,
-                }
-              : activity,
-          ),
-        }
-      : {}),
-  };
-};
-
-export const deleteProject = (data: AppData, id: string): Partial<AppData> => {
-  const deletedActivityIds = new Set(
-    data.activities
-      .filter(
-        (activity) =>
-          activity.projectId === id && activity.ownerId === LOCAL_OWNER_ID,
-      )
-      .map((activity) => activity.id),
-  );
-  return {
-    projects: data.projects.filter(
-      (project) => !(project.id === id && project.ownerId === LOCAL_OWNER_ID),
-    ),
+export const createAppRepository = (ownerId: string): AppRepository => ({
+  addActivity: (data, draft) => {
+    const now = new Date();
+    const project = data.projects.find((item) => item.id === draft.projectId);
+    const record: ActivityRecord = {
+      ...draft,
+      ownerId,
+      id: createId("activity"),
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      date: draft.date || toIsoDate(now),
+      ...(project ? { categoryKey: project.category } : {}),
+    };
+    return { record, changes: { activities: [record, ...data.activities] } };
+  },
+  updateActivity: (data, id, patch) => {
+    const current = data.activities.find(
+      (activity) => activity.id === id && activity.ownerId === ownerId,
+    );
+    const project = data.projects.find(
+      (item) =>
+        item.id === (patch.projectId ?? current?.projectId) &&
+        item.ownerId === ownerId,
+    );
+    return {
+      activities: data.activities.map((activity) =>
+        activity.id === id && activity.ownerId === ownerId
+          ? {
+              ...activity,
+              ...patch,
+              ownerId,
+              ...(project ? { categoryKey: project.category } : {}),
+              updatedAt: new Date().toISOString(),
+            }
+          : activity,
+      ),
+    };
+  },
+  deleteActivity: (data, id) => ({
     activities: data.activities.filter(
-      (activity) =>
-        !(activity.projectId === id && activity.ownerId === LOCAL_OWNER_ID),
+      (activity) => !(activity.id === id && activity.ownerId === ownerId),
     ),
     gakuchikaRecords: data.gakuchikaRecords.map((record) =>
-      record.ownerId === LOCAL_OWNER_ID
+      record.ownerId === ownerId
         ? {
             ...record,
             relatedActivityIds: record.relatedActivityIds.filter(
-              (activityId) => !deletedActivityIds.has(activityId),
+              (activityId) => activityId !== id,
             ),
-            ...(record.relatedActivityIds.some((activityId) =>
-              deletedActivityIds.has(activityId),
-            )
+            ...(record.relatedActivityIds.includes(id)
               ? { updatedAt: new Date().toISOString() }
               : {}),
           }
         : record,
     ),
-  };
-};
+  }),
+  addProject: (name, category, details) => {
+    const now = new Date().toISOString();
+    const project: Project = {
+      id: createId("project"),
+      ownerId,
+      name,
+      category,
+      ...details,
+      createdAt: now,
+      updatedAt: now,
+    };
+    return { project, changes: { projects: [project] } };
+  },
+  updateProject: (data, id, patch) => {
+    const now = new Date().toISOString();
+    const projects = data.projects.map((project) =>
+      project.id === id && project.ownerId === ownerId
+        ? { ...project, ...patch, updatedAt: now }
+        : project,
+    );
+    const nextProject = projects.find(
+      (project) => project.id === id && project.ownerId === ownerId,
+    );
+    return {
+      projects,
+      ...(nextProject
+        ? {
+            activities: data.activities.map((activity) =>
+              activity.projectId === id && activity.ownerId === ownerId
+                ? {
+                    ...activity,
+                    categoryKey: nextProject.category,
+                    updatedAt: now,
+                  }
+                : activity,
+            ),
+          }
+        : {}),
+    };
+  },
+  deleteProject: (data, id) => {
+    const deletedActivityIds = new Set(
+      data.activities
+        .filter(
+          (activity) =>
+            activity.projectId === id && activity.ownerId === ownerId,
+        )
+        .map((activity) => activity.id),
+    );
+    return {
+      projects: data.projects.filter(
+        (project) => !(project.id === id && project.ownerId === ownerId),
+      ),
+      activities: data.activities.filter(
+        (activity) =>
+          !(activity.projectId === id && activity.ownerId === ownerId),
+      ),
+      gakuchikaRecords: data.gakuchikaRecords.map((record) =>
+        record.ownerId === ownerId
+          ? {
+              ...record,
+              relatedActivityIds: record.relatedActivityIds.filter(
+                (activityId) => !deletedActivityIds.has(activityId),
+              ),
+              ...(record.relatedActivityIds.some((activityId) =>
+                deletedActivityIds.has(activityId),
+              )
+                ? { updatedAt: new Date().toISOString() }
+                : {}),
+            }
+          : record,
+      ),
+    };
+  },
+  addGakuchika: (data, activityIds, title) => {
+    const now = new Date().toISOString();
+    const record: GakuchikaRecord = {
+      id: createId("gakuchika"),
+      ownerId,
+      title: title?.trim() || "無題のガクチカ",
+      overview: "",
+      period: "",
+      role: "",
+      challenge: "",
+      difficulty: "",
+      action: "",
+      result: "",
+      learning: "",
+      numbers: [],
+      artifact: "",
+      relatedActivityIds: activityIds.filter((activityId) =>
+        data.activities.some(
+          (activity) =>
+            activity.id === activityId && activity.ownerId === ownerId,
+        ),
+      ),
+      createdAt: now,
+      updatedAt: now,
+    };
+    return {
+      record,
+      changes: { gakuchikaRecords: [record, ...data.gakuchikaRecords] },
+    };
+  },
+  updateGakuchika: (data, id, patch) => {
+    if (patch.es && !isValidEs(patch.es)) return null;
+    return {
+      gakuchikaRecords: data.gakuchikaRecords.map((record) =>
+        record.id === id && record.ownerId === ownerId
+          ? {
+              ...record,
+              ...patch,
+              ownerId,
+              ...(patch.relatedActivityIds
+                ? {
+                    relatedActivityIds: patch.relatedActivityIds.filter(
+                      (activityId) =>
+                        data.activities.some(
+                          (activity) => activity.id === activityId,
+                        ),
+                    ),
+                  }
+                : {}),
+              updatedAt: new Date().toISOString(),
+            }
+          : record,
+      ),
+    };
+  },
+  saveGakuchika: (data, id) => {
+    const now = new Date().toISOString();
+    return {
+      gakuchikaRecords: data.gakuchikaRecords.map((record) =>
+        record.id === id && record.ownerId === ownerId
+          ? { ...record, ownerId, savedAt: now, updatedAt: now }
+          : record,
+      ),
+    };
+  },
+  saveEs: (data, id, es) => {
+    if (!isValidEs(es)) return null;
+    return {
+      gakuchikaRecords: data.gakuchikaRecords.map((record) =>
+        record.id === id && record.ownerId === ownerId
+          ? {
+              ...record,
+              es: { ...es, ownerId },
+              updatedAt: new Date().toISOString(),
+            }
+          : record,
+      ),
+    };
+  },
+});
 
 export const addCategory = (label: string): CategoryMeta => ({
   key: createId("category"),
@@ -201,101 +297,6 @@ export const addTag = (label: string): TagMeta => ({
   color: "#2563EB",
   softColor: "#E8F0FF",
 });
-
-export const addGakuchika = (
-  data: AppData,
-  activityIds: string[],
-  title?: string,
-): { record: GakuchikaRecord; changes: Partial<AppData> } => {
-  const now = new Date().toISOString();
-  const record: GakuchikaRecord = {
-    id: createId("gakuchika"),
-    ownerId: LOCAL_OWNER_ID,
-    title: title?.trim() || "無題のガクチカ",
-    overview: "",
-    period: "",
-    role: "",
-    challenge: "",
-    difficulty: "",
-    action: "",
-    result: "",
-    learning: "",
-    numbers: [],
-    artifact: "",
-    relatedActivityIds: activityIds.filter((activityId) =>
-      data.activities.some(
-        (activity) =>
-          activity.id === activityId && activity.ownerId === LOCAL_OWNER_ID,
-      ),
-    ),
-    createdAt: now,
-    updatedAt: now,
-  };
-  return {
-    record,
-    changes: { gakuchikaRecords: [record, ...data.gakuchikaRecords] },
-  };
-};
-
-export const updateGakuchika = (
-  data: AppData,
-  id: string,
-  patch: Partial<Omit<GakuchikaRecord, "id">>,
-): Partial<AppData> | null => {
-  if (patch.es && !isValidEs(patch.es)) return null;
-  return {
-    gakuchikaRecords: data.gakuchikaRecords.map((record) =>
-      record.id === id && record.ownerId === LOCAL_OWNER_ID
-        ? {
-            ...record,
-            ...patch,
-            ownerId: LOCAL_OWNER_ID,
-            ...(patch.relatedActivityIds
-              ? {
-                  relatedActivityIds: patch.relatedActivityIds.filter(
-                    (activityId) =>
-                      data.activities.some(
-                        (activity) => activity.id === activityId,
-                      ),
-                  ),
-                }
-              : {}),
-            updatedAt: new Date().toISOString(),
-          }
-        : record,
-    ),
-  };
-};
-
-export const saveGakuchika = (data: AppData, id: string): Partial<AppData> => {
-  const now = new Date().toISOString();
-  return {
-    gakuchikaRecords: data.gakuchikaRecords.map((record) =>
-      record.id === id && record.ownerId === LOCAL_OWNER_ID
-        ? { ...record, ownerId: LOCAL_OWNER_ID, savedAt: now, updatedAt: now }
-        : record,
-    ),
-  };
-};
-
-export const saveEs = (
-  data: AppData,
-  id: string,
-  es: EsDraft,
-): Partial<AppData> | null => {
-  if (!isValidEs(es)) return null;
-  return {
-    gakuchikaRecords: data.gakuchikaRecords.map((record) =>
-      record.id === id && record.ownerId === LOCAL_OWNER_ID
-        ? {
-            ...record,
-            es: { ...es, ownerId: LOCAL_OWNER_ID },
-            updatedAt: new Date().toISOString(),
-          }
-        : record,
-    ),
-  };
-};
 
 export const mergeCategories = (persistedCategories?: CategoryMeta[]) => {
   const savedCategories = persistedCategories ?? [];

@@ -12,19 +12,10 @@ import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type { TagMeta } from "@/constants/tags";
 import { TAGS } from "@/constants/tags";
 import {
-  addActivity as addActivityRecord,
+  createAppRepository,
   addCategory as createCategory,
-  addGakuchika as createGakuchika,
-  addProject as createProject,
   addTag as createTag,
-  updateActivity as editActivity,
-  updateGakuchika as editGakuchika,
-  updateProject as editProject,
   mergeCategories,
-  deleteActivity as removeActivity,
-  deleteProject as removeProject,
-  saveEs as saveEsRecord,
-  saveGakuchika as saveGakuchikaRecord,
   type ActivityDraft,
   type AppData,
   type EsDraft,
@@ -149,6 +140,7 @@ type AppState = {
 };
 
 const toAppData = (state: AppState): AppData => state;
+const appRepository = createAppRepository(LOCAL_OWNER_ID);
 
 const normalizeActivityReferences = (
   activities: ActivityRecord[],
@@ -247,18 +239,20 @@ export const useAppStore = create<AppState>()(
       addActivity: (draft) => {
         let record!: ActivityRecord;
         set((state) => {
-          const result = addActivityRecord(toAppData(state), draft);
+          const result = appRepository.addActivity(toAppData(state), draft);
           record = result.record;
           return result.changes;
         });
         return record;
       },
       updateActivity: (id, patch) =>
-        set((state) => editActivity(toAppData(state), id, patch)),
+        set((state) =>
+          appRepository.updateActivity(toAppData(state), id, patch),
+        ),
       deleteActivity: (id) =>
-        set((state) => removeActivity(toAppData(state), id)),
+        set((state) => appRepository.deleteActivity(toAppData(state), id)),
       addProject: (name, category, details) => {
-        const result = createProject(name, category, details);
+        const result = appRepository.addProject(name, category, details);
         set((state) => ({
           projects: [result.project, ...state.projects],
           lastCreatedProjectId: result.project.id,
@@ -271,9 +265,11 @@ export const useAppStore = create<AppState>()(
         return category;
       },
       updateProject: (id, patch) =>
-        set((state) => editProject(toAppData(state), id, patch)),
+        set((state) =>
+          appRepository.updateProject(toAppData(state), id, patch),
+        ),
       deleteProject: (id) =>
-        set((state) => removeProject(toAppData(state), id)),
+        set((state) => appRepository.deleteProject(toAppData(state), id)),
       addTag: (label) => {
         const tag = createTag(label);
         set((state) => ({ tags: [...state.tags, tag] }));
@@ -283,7 +279,11 @@ export const useAppStore = create<AppState>()(
       addGakuchika: (activityIds, title) => {
         let record!: GakuchikaRecord;
         set((state) => {
-          const result = createGakuchika(toAppData(state), activityIds, title);
+          const result = appRepository.addGakuchika(
+            toAppData(state),
+            activityIds,
+            title,
+          );
           record = result.record;
           return result.changes;
         });
@@ -291,15 +291,17 @@ export const useAppStore = create<AppState>()(
       },
       updateGakuchika: (id, patch) =>
         set((state) => {
-          return editGakuchika(toAppData(state), id, patch) ?? state;
+          return (
+            appRepository.updateGakuchika(toAppData(state), id, patch) ?? state
+          );
         }),
       saveGakuchika: (id) =>
-        set((state) => saveGakuchikaRecord(toAppData(state), id)),
+        set((state) => appRepository.saveGakuchika(toAppData(state), id)),
       restoreData: (snapshot) => set(snapshot),
       saveEs: (id, es) => {
         let changes: Partial<AppData> | null = null;
         set((state) => {
-          changes = saveEsRecord(toAppData(state), id, es);
+          changes = appRepository.saveEs(toAppData(state), id, es);
           return changes ?? state;
         });
         if (!changes) return false;
