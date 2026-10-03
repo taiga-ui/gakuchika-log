@@ -16,9 +16,6 @@ export default function HelpScreen() {
       <View style={styles.headerRow}>
         <Pressable style={styles.headerAction} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={26} color={theme.primary} />
-          <ThemedText type="smallBold" style={{ color: theme.primary }}>
-            設定
-          </ThemedText>
         </Pressable>
 
         <ThemedText
@@ -56,13 +53,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    width: 86,
+    width: 38,
+    alignItems: "flex-start",
   },
   headerSpacer: {
-    width: 86,
+    width: 38,
   },
   headerTitle: {
     fontSize: 18,

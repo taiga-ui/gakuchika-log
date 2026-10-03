@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { ACTIVITY_CATEGORIES, type CategoryMeta } from "@/constants/categories";
+import {
+  ACTIVITY_CATEGORIES,
+  UNCATEGORIZED_CATEGORY_KEY,
+  type CategoryMeta,
+} from "@/constants/categories";
 import {
   MOCK_ACTIVITIES,
   MOCK_GAKUCHIKA,
@@ -304,7 +308,19 @@ export const useAppStore = create<AppState>()(
         let category!: CategoryMeta;
         set((state) => {
           category = createCategory(label, state.categories);
-          return { categories: [...state.categories, category] };
+          const uncategorizedIndex = state.categories.findIndex(
+            (item) => item.key === UNCATEGORIZED_CATEGORY_KEY,
+          );
+          return {
+            categories:
+              uncategorizedIndex === -1
+                ? [...state.categories, category]
+                : [
+                    ...state.categories.slice(0, uncategorizedIndex),
+                    category,
+                    ...state.categories.slice(uncategorizedIndex),
+                  ],
+          };
         });
         return category;
       },

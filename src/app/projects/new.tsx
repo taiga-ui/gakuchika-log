@@ -8,6 +8,7 @@ import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { TagChip } from "@/components/ui/tag-chip";
 import type { ActivityCategoryKey } from "@/constants/categories";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -21,7 +22,10 @@ export default function NewProjectScreen() {
   const theme = useTheme();
   const { projectId } = useLocalSearchParams<{ projectId?: string }>();
   const projectToEdit = useAppStore((state) =>
-    state.projects.find((project) => project.id === projectId),
+    state.projects.find(
+      (project) =>
+        project.id === projectId && project.ownerId === LOCAL_OWNER_ID,
+    ),
   );
   const addProject = useAppStore((state) => state.addProject);
   const updateProject = useAppStore((state) => state.updateProject);

@@ -6,7 +6,8 @@ import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
-import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
+import { CATEGORY_MAP, UNCATEGORIZED_CATEGORY } from "@/constants/categories";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore, waitForPersistence } from "@/store/use-app-store";
@@ -16,14 +17,18 @@ export default function ProjectDetailScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const project = useAppStore((state) =>
-    state.projects.find((item) => item.id === id),
+    state.projects.find(
+      (item) => item.id === id && item.ownerId === LOCAL_OWNER_ID,
+    ),
   );
   const allActivities = useAppStore((state) => state.activities);
   const categories = useAppStore((state) => state.categories);
   const activities = useMemo(
     () =>
       allActivities
-        .filter((item) => item.projectId === id)
+        .filter(
+          (item) => item.projectId === id && item.ownerId === LOCAL_OWNER_ID,
+        )
         .sort((left, right) => right.date.localeCompare(left.date)),
     [allActivities, id],
   );
@@ -68,7 +73,7 @@ export default function ProjectDetailScreen() {
   const category =
     categories.find((item) => item.key === project.category) ??
     CATEGORY_MAP[project.category] ??
-    ACTIVITY_CATEGORIES[0];
+    UNCATEGORIZED_CATEGORY;
   return (
     <Screen>
       <View style={styles.header}>

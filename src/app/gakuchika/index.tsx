@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -12,8 +13,14 @@ import { useAppStore } from "@/store/use-app-store";
 export default function GakuchikaScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const records = useAppStore((state) => state.gakuchikaRecords);
-  const activities = useAppStore((state) => state.activities);
+  const allRecords = useAppStore((state) => state.gakuchikaRecords);
+  const allActivities = useAppStore((state) => state.activities);
+  const records = allRecords.filter(
+    (record) => record.ownerId === LOCAL_OWNER_ID,
+  );
+  const activities = allActivities.filter(
+    (activity) => activity.ownerId === LOCAL_OWNER_ID,
+  );
   const [activeList, setActiveList] = useState<"draft" | "saved">("draft");
   const visibleRecords = records.filter((record) =>
     activeList === "saved" ? Boolean(record.savedAt) : !record.savedAt,

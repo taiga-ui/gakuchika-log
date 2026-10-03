@@ -7,6 +7,8 @@ import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import { TagChip } from "@/components/ui/tag-chip";
+import { UNCATEGORIZED_CATEGORY_KEY } from "@/constants/categories";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type { TagId } from "@/constants/tags";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -44,11 +46,14 @@ export default function NewActivityScreen() {
     activityId?: string;
     projectId?: string;
   }>();
-  const projects = useAppStore((state) => state.projects);
+  const allProjects = useAppStore((state) => state.projects);
   const categories = useAppStore((state) => state.categories);
   const tags = useAppStore((state) => state.tags);
   const activityToEdit = useAppStore((state) =>
-    state.activities.find((activity) => activity.id === activityId),
+    state.activities.find(
+      (activity) =>
+        activity.id === activityId && activity.ownerId === LOCAL_OWNER_ID,
+    ),
   );
   const lastCreatedProjectId = useAppStore(
     (state) => state.lastCreatedProjectId,
@@ -66,6 +71,9 @@ export default function NewActivityScreen() {
   const restoreData = useAppStore((state) => state.restoreData);
   const persistenceStatus = usePersistenceStore(
     (state) => state.persistenceStatus,
+  );
+  const projects = allProjects.filter(
+    (project) => project.ownerId === LOCAL_OWNER_ID,
   );
   const [title, setTitle] = useState(() => activityToEdit?.title ?? "");
   const [body, setBody] = useState(() => activityToEdit?.body ?? "");
@@ -226,6 +234,7 @@ export default function NewActivityScreen() {
   };
 
   const openCategoryActions = (key: string, label: string) => {
+    if (key === UNCATEGORIZED_CATEGORY_KEY) return;
     Alert.alert(label, undefined, [
       {
         text: "編集",

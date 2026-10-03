@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore, waitForPersistence } from "@/store/use-app-store";
@@ -42,7 +43,9 @@ export default function ActivityDetailScreen() {
   const restoreData = useAppStore((state) => state.restoreData);
 
   const activityId = Array.isArray(params.id) ? params.id[0] : params.id;
-  const activity = activities.find((item) => item.id === activityId);
+  const activity = activities.find(
+    (item) => item.id === activityId && item.ownerId === LOCAL_OWNER_ID,
+  );
 
   if (!activity) {
     return (
@@ -58,7 +61,9 @@ export default function ActivityDetailScreen() {
     );
   }
 
-  const project = projects.find((item) => item.id === activity.projectId);
+  const project = projects.find(
+    (item) => item.id === activity.projectId && item.ownerId === LOCAL_OWNER_ID,
+  );
   const handleDelete = () => {
     Alert.alert(
       "活動記録を削除しますか？",

@@ -1,10 +1,15 @@
-import { ACTIVITY_CATEGORIES } from "@/constants/categories";
+import {
+  ACTIVITY_CATEGORIES,
+  UNCATEGORIZED_CATEGORY,
+  UNCATEGORIZED_CATEGORY_KEY,
+} from "@/constants/categories";
 import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { TAGS } from "@/constants/tags";
 import {
   addCategory,
   addTag,
   createAppRepository,
+  mergeCategories,
   type AppData,
 } from "@/data/app-repository";
 import type { ActivityRecord, GakuchikaRecord, Project } from "@/types/domain";
@@ -192,9 +197,48 @@ describe("app repository", () => {
       ...renamed,
       ...repository.deleteCategory(renamed, category.key),
     };
-    expect(deleted.categories).toEqual([]);
-    expect(deleted.projects).toEqual([project]);
-    expect(deleted.activities).toEqual([activity]);
+    expect(deleted.categories).toEqual([
+      expect.objectContaining({
+        key: UNCATEGORIZED_CATEGORY_KEY,
+        label: "未分類",
+      }),
+    ]);
+    expect(deleted.projects).toEqual([
+      expect.objectContaining({
+        id: project.id,
+        category: UNCATEGORIZED_CATEGORY_KEY,
+      }),
+    ]);
+    expect(deleted.activities).toEqual([
+      expect.objectContaining({
+        id: activity.id,
+        categoryKey: UNCATEGORIZED_CATEGORY_KEY,
+      }),
+    ]);
+
+    const deletedAgain = {
+      ...deleted,
+      ...repository.deleteCategory(deleted, UNCATEGORIZED_CATEGORY_KEY),
+    };
+    expect(deletedAgain.categories).toEqual(deleted.categories);
+  });
+
+  it("rejects an activity linked to another owner's project", () => {
+    const foreignProject = {
+      ...makeProject("project-1"),
+      ownerId: "another-user",
+    };
+
+    expect(() =>
+      repository.addActivity(makeData({ projects: [foreignProject] }), {
+        projectId: foreignProject.id,
+        title: "不正な活動",
+        body: "本文",
+        categoryKey: "research",
+        tagIds: [],
+        date: "2026-02-01",
+      }),
+    ).toThrow("Project not found");
   });
 
   it("updates tag labels and removes only that tag from activities", () => {
@@ -311,6 +355,14 @@ describe("app repository", () => {
     expect(addCategory("追加カテゴリ", existingCategories).color).toBe(
       ACTIVITY_CATEGORIES[0].color,
     );
+  });
+
+  it("keeps uncategorized at the end when categories are restored", () => {
+    const customCategory = { ...ACTIVITY_CATEGORIES[0], key: "custom" };
+
+    expect(
+      mergeCategories([UNCATEGORIZED_CATEGORY, customCategory]).at(-1)?.key,
+    ).toBe(UNCATEGORIZED_CATEGORY_KEY);
   });
 
   it("assigns the least-used palette color to new tags", () => {

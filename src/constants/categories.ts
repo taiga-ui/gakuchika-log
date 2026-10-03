@@ -13,6 +13,18 @@ export type CategoryMeta = {
   description: string;
 };
 
+export const UNCATEGORIZED_CATEGORY_KEY = "uncategorized";
+
+export const UNCATEGORIZED_CATEGORY: CategoryMeta = {
+  key: UNCATEGORIZED_CATEGORY_KEY,
+  label: "未分類",
+  icon: "folder-open-outline",
+  color: "#64748B",
+  softColor: "#F1F5F9",
+  borderColor: "#CBD5E1",
+  description: "削除されたカテゴリのプロジェクト・活動記録",
+};
+
 export const ACTIVITY_CATEGORIES = [
   {
     key: "research",

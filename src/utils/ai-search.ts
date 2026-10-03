@@ -1,3 +1,4 @@
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import type { AiSearchResult } from "@/types/ai-search";
 import type { ActivityRecord, GakuchikaRecord, Project } from "@/types/domain";
 
@@ -16,7 +17,9 @@ export function resolveAiSource(
   sourceId: string,
   { activities, projects, gakuchikaRecords }: AiSourceData,
 ): AiSource | null {
-  const activity = activities.find((item) => item.id === sourceId);
+  const activity = activities.find(
+    (item) => item.id === sourceId && item.ownerId === LOCAL_OWNER_ID,
+  );
   if (activity) {
     return {
       kind: "activity",
@@ -26,7 +29,9 @@ export function resolveAiSource(
     };
   }
 
-  const project = projects.find((item) => item.id === sourceId);
+  const project = projects.find(
+    (item) => item.id === sourceId && item.ownerId === LOCAL_OWNER_ID,
+  );
   if (project) {
     return {
       kind: "project",
@@ -36,7 +41,9 @@ export function resolveAiSource(
     };
   }
 
-  const gakuchika = gakuchikaRecords.find((item) => item.id === sourceId);
+  const gakuchika = gakuchikaRecords.find(
+    (item) => item.id === sourceId && item.ownerId === LOCAL_OWNER_ID,
+  );
   if (gakuchika) {
     return {
       kind: "gakuchika",

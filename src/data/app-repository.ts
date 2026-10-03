@@ -1,4 +1,9 @@
-import { ACTIVITY_CATEGORIES, type CategoryMeta } from "@/constants/categories";
+import {
+  ACTIVITY_CATEGORIES,
+  UNCATEGORIZED_CATEGORY,
+  UNCATEGORIZED_CATEGORY_KEY,
+  type CategoryMeta,
+} from "@/constants/categories";
 import { TAGS, type TagId, type TagMeta } from "@/constants/tags";
 import type {
   ActivityRecord,
@@ -81,7 +86,12 @@ const isValidEs = (es: Pick<EsData, "maxCharacters" | "content">) =>
 export const createAppRepository = (ownerId: string): AppRepository => ({
   addActivity: (data, draft) => {
     const now = new Date();
-    const project = data.projects.find((item) => item.id === draft.projectId);
+    const project = data.projects.find(
+      (item) => item.id === draft.projectId && item.ownerId === ownerId,
+    );
+    if (!project) {
+      throw new Error("Project not found");
+    }
     const record: ActivityRecord = {
       ...draft,
       ownerId,
@@ -89,7 +99,7 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
       date: draft.date || toIsoDate(now),
-      ...(project ? { categoryKey: project.category } : {}),
+      categoryKey: project.category,
     };
     return { record, changes: { activities: [record, ...data.activities] } };
   },
@@ -102,12 +112,14 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
         item.id === (patch.projectId ?? current?.projectId) &&
         item.ownerId === ownerId,
     );
+    const projectId = project?.id ?? current?.projectId;
     return {
       activities: data.activities.map((activity) =>
         activity.id === id && activity.ownerId === ownerId
           ? {
               ...activity,
               ...patch,
+              ...(projectId ? { projectId } : {}),
               ownerId,
               ...(project ? { categoryKey: project.category } : {}),
               updatedAt: new Date().toISOString(),
@@ -213,9 +225,47 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
       category.key === key ? { ...category, label } : category,
     ),
   }),
-  deleteCategory: (data, key) => ({
-    categories: data.categories.filter((category) => category.key !== key),
-  }),
+  deleteCategory: (data, key) => {
+    if (
+      key === UNCATEGORIZED_CATEGORY_KEY ||
+      !data.categories.some((category) => category.key === key)
+    ) {
+      return { categories: data.categories };
+    }
+
+    const fallbackCategory =
+      data.categories.find(
+        (category) => category.key === UNCATEGORIZED_CATEGORY_KEY,
+      ) ?? UNCATEGORIZED_CATEGORY;
+
+    const affectedProjectIds = new Set(
+      data.projects
+        .filter((project) => project.category === key)
+        .map((project) => project.id),
+    );
+    const now = new Date().toISOString();
+
+    return {
+      categories: [
+        ...data.categories.filter(
+          (category) =>
+            category.key !== key && category.key !== UNCATEGORIZED_CATEGORY_KEY,
+        ),
+        fallbackCategory,
+      ],
+      projects: data.projects.map((project) =>
+        project.category === key
+          ? { ...project, category: fallbackCategory.key, updatedAt: now }
+          : project,
+      ),
+      activities: data.activities.map((activity) =>
+        activity.categoryKey === key ||
+        affectedProjectIds.has(activity.projectId)
+          ? { ...activity, categoryKey: fallbackCategory.key, updatedAt: now }
+          : activity,
+      ),
+    };
+  },
   updateTag: (data, id, label) => ({
     tags: data.tags.map((tag) => (tag.id === id ? { ...tag, label } : tag)),
   }),
@@ -364,7 +414,16 @@ export const mergeCategories = (persistedCategories?: CategoryMeta[]) => {
     ACTIVITY_CATEGORIES.map((category) => category.key),
   );
   const customCategories = savedCategories.filter(
-    (category) => !builtInKeys.has(category.key),
+    (category) =>
+      !builtInKeys.has(category.key) &&
+      category.key !== UNCATEGORIZED_CATEGORY_KEY,
   );
-  return [...ACTIVITY_CATEGORIES, ...customCategories];
+  const uncategorized = savedCategories.find(
+    (category) => category.key === UNCATEGORIZED_CATEGORY_KEY,
+  );
+  return [
+    ...ACTIVITY_CATEGORIES,
+    ...customCategories,
+    ...(uncategorized ? [uncategorized] : []),
+  ];
 };
