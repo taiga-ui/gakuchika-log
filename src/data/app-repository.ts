@@ -244,7 +244,9 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
                     relatedActivityIds: patch.relatedActivityIds.filter(
                       (activityId) =>
                         data.activities.some(
-                          (activity) => activity.id === activityId,
+                          (activity) =>
+                            activity.id === activityId &&
+                            activity.ownerId === record.ownerId,
                         ),
                     ),
                   }

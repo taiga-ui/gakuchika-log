@@ -142,7 +142,7 @@ type AppState = {
 const toAppData = (state: AppState): AppData => state;
 const appRepository = createAppRepository(LOCAL_OWNER_ID);
 
-const normalizeActivityReferences = (
+export const normalizeActivityReferences = (
   activities: ActivityRecord[],
   projects: Project[],
   gakuchikaRecords: GakuchikaRecord[],
@@ -154,6 +154,7 @@ const normalizeActivityReferences = (
   );
   const normalizedActivities = activities.map((activity) => ({
     ...activity,
+    ownerId: activity.ownerId || LOCAL_OWNER_ID,
     categoryKey:
       projectCategories.get(activity.projectId) ?? activity.categoryKey,
   }));
@@ -181,34 +182,35 @@ const normalizeActivityReferences = (
   return {
     projects: projects.map((project) => ({
       ...project,
-      ownerId: LOCAL_OWNER_ID,
+      ownerId: project.ownerId || LOCAL_OWNER_ID,
     })),
-    activities: normalizedActivities.map((activity) => ({
-      ...activity,
-      ownerId: LOCAL_OWNER_ID,
-    })),
-    gakuchikaRecords: gakuchikaRecords.map((record) => ({
-      ...record,
-      ownerId: LOCAL_OWNER_ID,
-      relatedActivityIds: record.relatedActivityIds.filter((id) =>
-        activityIds.has(id),
-      ),
-      ...(record.es || !legacyByGakuchikaId.has(record.id)
-        ? {}
-        : {
-            es: {
-              ownerId: LOCAL_OWNER_ID,
-              company: "",
-              question: legacyByGakuchikaId.get(record.id)!.prompt,
-              content: legacyByGakuchikaId.get(record.id)!.content,
-              maxCharacters: Math.max(
-                ES_DEFAULT_MAX_CHARACTERS,
-                [...legacyByGakuchikaId.get(record.id)!.content].length,
-              ),
-            },
-          }),
-      ...(record.es ? { es: { ...record.es, ownerId: LOCAL_OWNER_ID } } : {}),
-    })),
+    activities: normalizedActivities,
+    gakuchikaRecords: gakuchikaRecords.map((record) => {
+      const ownerId = record.ownerId || LOCAL_OWNER_ID;
+      return {
+        ...record,
+        ownerId,
+        relatedActivityIds: record.relatedActivityIds.filter((id) => {
+          const activity = normalizedActivities.find((item) => item.id === id);
+          return activityIds.has(id) && activity?.ownerId === ownerId;
+        }),
+        ...(record.es || !legacyByGakuchikaId.has(record.id)
+          ? {}
+          : {
+              es: {
+                ownerId,
+                company: "",
+                question: legacyByGakuchikaId.get(record.id)!.prompt,
+                content: legacyByGakuchikaId.get(record.id)!.content,
+                maxCharacters: Math.max(
+                  ES_DEFAULT_MAX_CHARACTERS,
+                  [...legacyByGakuchikaId.get(record.id)!.content].length,
+                ),
+              },
+            }),
+        ...(record.es ? { es: { ...record.es } } : {}),
+      };
+    }),
   };
 };
 
