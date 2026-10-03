@@ -262,8 +262,11 @@ export const useAppStore = create<AppState>()(
         return result.project;
       },
       addCategory: (label) => {
-        const category = createCategory(label);
-        set((state) => ({ categories: [...state.categories, category] }));
+        let category!: CategoryMeta;
+        set((state) => {
+          category = createCategory(label, state.categories);
+          return { categories: [...state.categories, category] };
+        });
         return category;
       },
       updateProject: (id, patch) =>
@@ -273,8 +276,11 @@ export const useAppStore = create<AppState>()(
       deleteProject: (id) =>
         set((state) => appRepository.deleteProject(toAppData(state), id)),
       addTag: (label) => {
-        const tag = createTag(label);
-        set((state) => ({ tags: [...state.tags, tag] }));
+        let tag!: TagMeta;
+        set((state) => {
+          tag = createTag(label, state.tags);
+          return { tags: [...state.tags, tag] };
+        });
         return tag;
       },
       clearLastCreatedProject: () => set({ lastCreatedProjectId: undefined }),
