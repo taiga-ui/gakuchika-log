@@ -237,30 +237,49 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
       data.categories.find(
         (category) => category.key === UNCATEGORIZED_CATEGORY_KEY,
       ) ?? UNCATEGORIZED_CATEGORY;
+    const usedByAnotherOwner =
+      data.projects.some(
+        (project) => project.ownerId !== ownerId && project.category === key,
+      ) ||
+      data.activities.some(
+        (activity) =>
+          activity.ownerId !== ownerId && activity.categoryKey === key,
+      );
 
     const affectedProjectIds = new Set(
       data.projects
-        .filter((project) => project.category === key)
+        .filter(
+          (project) => project.ownerId === ownerId && project.category === key,
+        )
         .map((project) => project.id),
     );
     const now = new Date().toISOString();
 
     return {
-      categories: [
-        ...data.categories.filter(
-          (category) =>
-            category.key !== key && category.key !== UNCATEGORIZED_CATEGORY_KEY,
-        ),
-        fallbackCategory,
-      ],
+      categories: usedByAnotherOwner
+        ? [
+            ...data.categories.filter(
+              (category) => category.key !== UNCATEGORIZED_CATEGORY_KEY,
+            ),
+            fallbackCategory,
+          ]
+        : [
+            ...data.categories.filter(
+              (category) =>
+                category.key !== key &&
+                category.key !== UNCATEGORIZED_CATEGORY_KEY,
+            ),
+            fallbackCategory,
+          ],
       projects: data.projects.map((project) =>
-        project.category === key
+        project.ownerId === ownerId && project.category === key
           ? { ...project, category: fallbackCategory.key, updatedAt: now }
           : project,
       ),
       activities: data.activities.map((activity) =>
-        activity.categoryKey === key ||
-        affectedProjectIds.has(activity.projectId)
+        activity.ownerId === ownerId &&
+        (activity.categoryKey === key ||
+          affectedProjectIds.has(activity.projectId))
           ? { ...activity, categoryKey: fallbackCategory.key, updatedAt: now }
           : activity,
       ),

@@ -89,6 +89,31 @@ describe("app store hydration", () => {
     ]);
   });
 
+  it("does not apply another owner's project category to an activity", () => {
+    const activity = makeActivity("activity-local", "local-user");
+    const foreignProject = {
+      ...makeProject("another-user"),
+      category: "volunteer",
+    };
+
+    const result = normalizeActivityReferences(
+      [activity],
+      [foreignProject],
+      [],
+    );
+
+    expect(result.activities[0].categoryKey).toBe("research");
+  });
+
+  it("normalizes an embedded ES owner to its parent gakuchika", () => {
+    const record = makeGakuchika("local-user");
+    record.es = { ...record.es!, ownerId: "another-user" };
+
+    const result = normalizeActivityReferences([], [], [record]);
+
+    expect(result.gakuchikaRecords[0].es?.ownerId).toBe("local-user");
+  });
+
   it("normalizes old profile data without retaining personal fields", () => {
     expect(
       normalizeProfile({

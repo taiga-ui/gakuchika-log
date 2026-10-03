@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -15,7 +16,13 @@ export default function ProfileScreen() {
   const activities = useAppStore((state) => state.activities);
   const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
-  const withPhotoCount = activities.filter(
+  const ownedActivities = activities.filter(
+    (activity) => activity.ownerId === LOCAL_OWNER_ID,
+  );
+  const ownedGakuchikaRecords = gakuchikaRecords.filter(
+    (record) => record.ownerId === LOCAL_OWNER_ID,
+  );
+  const withPhotoCount = ownedActivities.filter(
     (activity) => activity.photoAsset,
   ).length;
 
@@ -43,12 +50,12 @@ export default function ProfileScreen() {
       <View style={styles.statRow}>
         <StatCard
           label="活動数"
-          value={`${activities.length}`}
+          value={`${ownedActivities.length}`}
           helper="ローカル保存済み"
         />
         <StatCard
           label="ガクチカ数"
-          value={`${gakuchikaRecords.length}`}
+          value={`${ownedGakuchikaRecords.length}`}
           helper="候補として整理済み"
           tone="accent"
         />
