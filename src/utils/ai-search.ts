@@ -16,9 +16,10 @@ export type AiSourceData = {
 export function resolveAiSource(
   sourceId: string,
   { activities, projects, gakuchikaRecords }: AiSourceData,
+  ownerId = LOCAL_OWNER_ID,
 ): AiSource | null {
   const activity = activities.find(
-    (item) => item.id === sourceId && item.ownerId === LOCAL_OWNER_ID,
+    (item) => item.id === sourceId && item.ownerId === ownerId,
   );
   if (activity) {
     return {
@@ -30,7 +31,7 @@ export function resolveAiSource(
   }
 
   const project = projects.find(
-    (item) => item.id === sourceId && item.ownerId === LOCAL_OWNER_ID,
+    (item) => item.id === sourceId && item.ownerId === ownerId,
   );
   if (project) {
     return {
@@ -42,7 +43,7 @@ export function resolveAiSource(
   }
 
   const gakuchika = gakuchikaRecords.find(
-    (item) => item.id === sourceId && item.ownerId === LOCAL_OWNER_ID,
+    (item) => item.id === sourceId && item.ownerId === ownerId,
   );
   if (gakuchika) {
     return {
@@ -59,9 +60,13 @@ export function resolveAiSource(
 export function getAiResultSources(
   result: AiSearchResult,
   data: AiSourceData,
+  ownerId = LOCAL_OWNER_ID,
 ): Array<AiSource | { kind: "missing"; id: string }> {
   return result.sourceIds.map(
     (sourceId) =>
-      resolveAiSource(sourceId, data) ?? { kind: "missing", id: sourceId },
+      resolveAiSource(sourceId, data, ownerId) ?? {
+        kind: "missing",
+        id: sourceId,
+      },
   );
 }

@@ -7,6 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
 import { SectionHeader } from "@/components/ui/section-header";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -15,7 +16,10 @@ export default function AlbumsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const activities = useAppStore((state) => state.activities);
-  const withPhoto = activities.filter((activity) => activity.photoAsset);
+  const withPhoto = activities.filter(
+    (activity) =>
+      activity.ownerId === LOCAL_OWNER_ID && Boolean(activity.photoAsset),
+  );
 
   return (
     <Screen>

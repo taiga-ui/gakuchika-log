@@ -223,6 +223,34 @@ describe("app repository", () => {
     expect(deletedAgain.categories).toEqual(deleted.categories);
   });
 
+  it("does not migrate another owner's category data", () => {
+    const category = { ...ACTIVITY_CATEGORIES[0], key: "custom-category" };
+    const ownedProject = makeProject("owned-project");
+    const foreignProject = {
+      ...makeProject("foreign-project"),
+      ownerId: "another-user",
+      category: category.key,
+    };
+    const foreignActivity = {
+      ...makeActivity("foreign-activity", foreignProject.id, "another-user"),
+      categoryKey: category.key,
+    };
+    const data = makeData({
+      categories: [category],
+      projects: [ownedProject, foreignProject],
+      activities: [foreignActivity],
+    });
+
+    const next = { ...data, ...repository.deleteCategory(data, category.key) };
+
+    expect(next.categories).toEqual([
+      category,
+      expect.objectContaining({ key: UNCATEGORIZED_CATEGORY_KEY }),
+    ]);
+    expect(next.projects).toEqual([ownedProject, foreignProject]);
+    expect(next.activities).toEqual([foreignActivity]);
+  });
+
   it("rejects an activity linked to another owner's project", () => {
     const foreignProject = {
       ...makeProject("project-1"),

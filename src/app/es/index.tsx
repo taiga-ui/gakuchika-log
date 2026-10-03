@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
 import { type ActivityCategoryKey } from "@/constants/categories";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -17,7 +18,12 @@ export default function SearchScreen() {
   const categories = useAppStore((state) => state.categories);
 
   const getCountLabel = (key: ActivityCategoryKey) =>
-    `${projects.filter((project) => project.category === key).length}個のプロジェクト`;
+    `${
+      projects.filter(
+        (project) =>
+          project.ownerId === LOCAL_OWNER_ID && project.category === key,
+      ).length
+    }個のプロジェクト`;
 
   return (
     <Screen>

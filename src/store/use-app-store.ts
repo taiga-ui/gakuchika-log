@@ -158,14 +158,18 @@ export const normalizeActivityReferences = (
 ) => {
   const activityIds = new Set(activities.map((activity) => activity.id));
   const projectCategories = new Map(
-    projects.map((project) => [project.id, project.category]),
+    projects.map((project) => [project.id, project]),
   );
-  const normalizedActivities = activities.map((activity) => ({
-    ...activity,
-    ownerId: activity.ownerId || LOCAL_OWNER_ID,
-    categoryKey:
-      projectCategories.get(activity.projectId) ?? activity.categoryKey,
-  }));
+  const normalizedActivities = activities.map((activity) => {
+    const ownerId = activity.ownerId || LOCAL_OWNER_ID;
+    const project = projectCategories.get(activity.projectId);
+    return {
+      ...activity,
+      ownerId,
+      categoryKey:
+        project?.ownerId === ownerId ? project.category : activity.categoryKey,
+    };
+  });
 
   const legacyByGakuchikaId = new Map(
     legacyEsDrafts
@@ -216,7 +220,7 @@ export const normalizeActivityReferences = (
                 ),
               },
             }),
-        ...(record.es ? { es: { ...record.es } } : {}),
+        ...(record.es ? { es: { ...record.es, ownerId } } : {}),
       };
     }),
   };
