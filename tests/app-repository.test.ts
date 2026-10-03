@@ -191,6 +191,31 @@ describe("app repository", () => {
     expect(next.gakuchikaRecords[1]).toEqual(other);
   });
 
+  it("only relates activities owned by the gakuchika owner", () => {
+    const ownedActivity = makeActivity("activity-1", "project-1");
+    const otherActivity = makeActivity(
+      "activity-2",
+      "project-1",
+      "another-user",
+    );
+    const draft = makeGakuchika("gakuchika-1", []);
+    const data = makeData({
+      activities: [ownedActivity, otherActivity],
+      gakuchikaRecords: [draft],
+    });
+
+    const next = {
+      ...data,
+      ...repository.updateGakuchika(data, draft.id, {
+        relatedActivityIds: [ownedActivity.id, otherActivity.id],
+      }),
+    };
+
+    expect(next.gakuchikaRecords[0].relatedActivityIds).toEqual([
+      ownedActivity.id,
+    ]);
+  });
+
   it("uses the ownerId supplied when creating the repository", () => {
     const otherRepository = createAppRepository("another-user");
     const result = otherRepository.addProject("別ユーザー", "research");
