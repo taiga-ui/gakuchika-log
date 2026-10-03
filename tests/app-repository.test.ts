@@ -1,5 +1,12 @@
+import { ACTIVITY_CATEGORIES } from "@/constants/categories";
 import { LOCAL_OWNER_ID } from "@/constants/owner";
-import { createAppRepository, type AppData } from "@/data/app-repository";
+import { TAGS } from "@/constants/tags";
+import {
+  addCategory,
+  addTag,
+  createAppRepository,
+  type AppData,
+} from "@/data/app-repository";
 import type { ActivityRecord, GakuchikaRecord, Project } from "@/types/domain";
 
 const makeProject = (
@@ -221,5 +228,54 @@ describe("app repository", () => {
     const result = otherRepository.addProject("別ユーザー", "research");
 
     expect(result.project.ownerId).toBe("another-user");
+  });
+
+  it("assigns the least-used palette color to new categories", () => {
+    const existingCategories = [
+      ...ACTIVITY_CATEGORIES,
+      { ...ACTIVITY_CATEGORIES[0], key: "custom-blue" },
+    ];
+
+    expect(addCategory("学外活動", existingCategories)).toEqual(
+      expect.objectContaining({
+        color: ACTIVITY_CATEGORIES[1].color,
+        softColor: ACTIVITY_CATEGORIES[1].softColor,
+        borderColor: ACTIVITY_CATEGORIES[1].borderColor,
+      }),
+    );
+  });
+
+  it("reuses category palette colors when all colors are already used", () => {
+    const existingCategories = ACTIVITY_CATEGORIES.map((category) => ({
+      ...category,
+      key: `existing-${category.key}`,
+    }));
+
+    expect(addCategory("追加カテゴリ", existingCategories).color).toBe(
+      ACTIVITY_CATEGORIES[0].color,
+    );
+  });
+
+  it("assigns the least-used palette color to new tags", () => {
+    const existingTags = [
+      ...TAGS.map((tag) => ({ ...tag, id: `existing-${tag.id}` })),
+      { ...TAGS[0], id: "custom-blue" },
+    ];
+
+    expect(addTag("新しいタグ", existingTags)).toEqual(
+      expect.objectContaining({
+        color: TAGS[1].color,
+        softColor: TAGS[1].softColor,
+      }),
+    );
+  });
+
+  it("reuses palette colors when all palette colors are already used", () => {
+    const existingTags = TAGS.map((tag) => ({
+      ...tag,
+      id: `existing-${tag.id}`,
+    }));
+
+    expect(addTag("追加タグ", existingTags).color).toBe(TAGS[0].color);
   });
 });

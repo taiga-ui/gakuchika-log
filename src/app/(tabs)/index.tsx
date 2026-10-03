@@ -8,6 +8,7 @@ import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
+import { getRecentActivities } from "@/utils/activity";
 import { formatJapaneseDate } from "@/utils/date";
 
 export default function HomeScreen() {
@@ -17,7 +18,7 @@ export default function HomeScreen() {
   const projects = useAppStore((state) => state.projects);
   const categories = useAppStore((state) => state.categories);
 
-  const recentActivities = activities.slice(0, 3);
+  const recentActivities = getRecentActivities(activities);
 
   return (
     <Screen>

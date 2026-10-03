@@ -1,5 +1,5 @@
 import { ACTIVITY_CATEGORIES, type CategoryMeta } from "@/constants/categories";
-import type { TagId, TagMeta } from "@/constants/tags";
+import { TAGS, type TagId, type TagMeta } from "@/constants/tags";
 import type {
   ActivityRecord,
   EsData,
@@ -283,22 +283,54 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
   },
 });
 
-export const addCategory = (label: string): CategoryMeta => ({
-  key: createId("category"),
-  label,
-  icon: "folder-outline",
-  color: "#475569",
-  softColor: "#EAEFF7",
-  borderColor: "#CBD5E1",
-  description: "ユーザーが追加したカテゴリ",
-});
+export const addCategory = (
+  label: string,
+  existingCategories: readonly CategoryMeta[] = [],
+): CategoryMeta => {
+  const usage = new Map<string, number>(
+    ACTIVITY_CATEGORIES.map((category) => [category.color, 0]),
+  );
+  existingCategories.forEach((category) => {
+    const count = usage.get(category.color);
+    if (count !== undefined) usage.set(category.color, count + 1);
+  });
+  const paletteCategory = ACTIVITY_CATEGORIES.reduce((leastUsed, category) =>
+    usage.get(category.color)! < usage.get(leastUsed.color)!
+      ? category
+      : leastUsed,
+  );
 
-export const addTag = (label: string): TagMeta => ({
-  id: createId("tag") as TagId,
-  label,
-  color: "#2563EB",
-  softColor: "#E8F0FF",
-});
+  return {
+    key: createId("category"),
+    label,
+    icon: "folder-outline",
+    color: paletteCategory.color,
+    softColor: paletteCategory.softColor,
+    borderColor: paletteCategory.borderColor,
+    description: "ユーザーが追加したカテゴリ",
+  };
+};
+
+export const addTag = (
+  label: string,
+  existingTags: readonly TagMeta[] = [],
+): TagMeta => {
+  const usage = new Map<string, number>(TAGS.map((tag) => [tag.color, 0]));
+  existingTags.forEach((tag) => {
+    const count = usage.get(tag.color);
+    if (count !== undefined) usage.set(tag.color, count + 1);
+  });
+  const paletteTag = TAGS.reduce((leastUsed, tag) =>
+    usage.get(tag.color)! < usage.get(leastUsed.color)! ? tag : leastUsed,
+  );
+
+  return {
+    id: createId("tag") as TagId,
+    label,
+    color: paletteTag.color,
+    softColor: paletteTag.softColor,
+  };
+};
 
 export const mergeCategories = (persistedCategories?: CategoryMeta[]) => {
   const savedCategories = persistedCategories ?? [];
