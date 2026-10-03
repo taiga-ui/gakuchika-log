@@ -48,6 +48,14 @@ export type AppRepository = {
     patch: Partial<Pick<Project, "name" | "description" | "category">>,
   ) => Partial<AppData>;
   deleteProject: (data: AppData, id: string) => Partial<AppData>;
+  updateCategory: (
+    data: AppData,
+    key: string,
+    label: string,
+  ) => Partial<AppData>;
+  deleteCategory: (data: AppData, key: string) => Partial<AppData>;
+  updateTag: (data: AppData, id: TagId, label: string) => Partial<AppData>;
+  deleteTag: (data: AppData, id: TagId) => Partial<AppData>;
   addGakuchika: (
     data: AppData,
     activityIds: string[],
@@ -200,6 +208,24 @@ export const createAppRepository = (ownerId: string): AppRepository => ({
       ),
     };
   },
+  updateCategory: (data, key, label) => ({
+    categories: data.categories.map((category) =>
+      category.key === key ? { ...category, label } : category,
+    ),
+  }),
+  deleteCategory: (data, key) => ({
+    categories: data.categories.filter((category) => category.key !== key),
+  }),
+  updateTag: (data, id, label) => ({
+    tags: data.tags.map((tag) => (tag.id === id ? { ...tag, label } : tag)),
+  }),
+  deleteTag: (data, id) => ({
+    tags: data.tags.filter((tag) => tag.id !== id),
+    activities: data.activities.map((activity) => ({
+      ...activity,
+      tagIds: activity.tagIds.filter((tagId) => tagId !== id),
+    })),
+  }),
   addGakuchika: (data, activityIds, title) => {
     const now = new Date().toISOString();
     const record: GakuchikaRecord = {

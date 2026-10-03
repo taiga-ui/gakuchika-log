@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -21,8 +28,13 @@ export default function ActivitiesScreen() {
   const selectedCategory = useAppStore((state) => state.selectedCategory);
   const setSelectedCategory = useAppStore((state) => state.setSelectedCategory);
   const addCategory = useAppStore((state) => state.addCategory);
+  const updateCategory = useAppStore((state) => state.updateCategory);
+  const deleteCategory = useAppStore((state) => state.deleteCategory);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [editingCategoryKey, setEditingCategoryKey] = useState<string | null>(
+    null,
+  );
 
   const visibleProjects = useMemo(() => {
     return projects
@@ -36,10 +48,52 @@ export default function ActivitiesScreen() {
   const handleAddCategory = () => {
     const label = newCategoryName.trim();
     if (!label) return;
+    if (editingCategoryKey) {
+      updateCategory(editingCategoryKey, label);
+      setNewCategoryName("");
+      setEditingCategoryKey(null);
+      setIsCategoryModalVisible(false);
+      return;
+    }
     const addedCategory = addCategory(label);
     setSelectedCategory(addedCategory.key);
     setNewCategoryName("");
     setIsCategoryModalVisible(false);
+  };
+
+  const openCategoryActions = (key: string, label: string) => {
+    Alert.alert(label, undefined, [
+      {
+        text: "編集",
+        onPress: () => {
+          setEditingCategoryKey(key);
+          setNewCategoryName(label);
+          setIsCategoryModalVisible(true);
+        },
+      },
+      {
+        text: "削除",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert(
+            `${label}を削除しますか？`,
+            "プロジェクトと活動記録は削除されません。",
+            [
+              { text: "キャンセル", style: "cancel" },
+              {
+                text: "削除",
+                style: "destructive",
+                onPress: () => {
+                  deleteCategory(key);
+                  if (selectedCategory === key) setSelectedCategory("all");
+                },
+              },
+            ],
+          );
+        },
+      },
+      { text: "キャンセル", style: "cancel" },
+    ]);
   };
 
   return (
@@ -89,6 +143,11 @@ export default function ActivitiesScreen() {
               <Pressable
                 key={item.value}
                 onPress={() => setSelectedCategory(item.value)}
+                onLongPress={
+                  item.value === "all"
+                    ? undefined
+                    : () => openCategoryActions(item.value, item.label)
+                }
                 style={[
                   styles.filterChip,
                   {
@@ -228,7 +287,7 @@ export default function ActivitiesScreen() {
               style={[styles.modalCard, { backgroundColor: theme.surface }]}
             >
               <ThemedText type="subtitle" style={{ color: theme.text }}>
-                カテゴリを追加
+                {editingCategoryKey ? "カテゴリを編集" : "カテゴリを追加"}
               </ThemedText>
               <FormField
                 label="カテゴリ名"
@@ -240,6 +299,7 @@ export default function ActivitiesScreen() {
                 <Pressable
                   onPress={() => {
                     setNewCategoryName("");
+                    setEditingCategoryKey(null);
                     setIsCategoryModalVisible(false);
                   }}
                   style={styles.modalAction}
@@ -267,7 +327,7 @@ export default function ActivitiesScreen() {
                     type="smallBold"
                     style={{ color: theme.textInverse }}
                   >
-                    追加
+                    {editingCategoryKey ? "保存" : "追加"}
                   </ThemedText>
                 </Pressable>
               </View>
