@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -17,8 +18,14 @@ import {
 export default function NewGakuchikaScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const activities = useAppStore((state) => state.activities);
-  const projects = useAppStore((state) => state.projects);
+  const allActivities = useAppStore((state) => state.activities);
+  const allProjects = useAppStore((state) => state.projects);
+  const activities = allActivities.filter(
+    (activity) => activity.ownerId === LOCAL_OWNER_ID,
+  );
+  const projects = allProjects.filter(
+    (project) => project.ownerId === LOCAL_OWNER_ID,
+  );
   const addGakuchika = useAppStore((state) => state.addGakuchika);
   const restoreData = useAppStore((state) => state.restoreData);
   const persistenceStatus = usePersistenceStore(

@@ -14,7 +14,12 @@ import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
-import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
+import {
+  CATEGORY_MAP,
+  UNCATEGORIZED_CATEGORY,
+  UNCATEGORIZED_CATEGORY_KEY,
+} from "@/constants/categories";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -38,6 +43,7 @@ export default function ActivitiesScreen() {
 
   const visibleProjects = useMemo(() => {
     return projects
+      .filter((project) => project.ownerId === LOCAL_OWNER_ID)
       .filter(
         (project) =>
           selectedCategory === "all" || project.category === selectedCategory,
@@ -130,8 +136,15 @@ export default function ActivitiesScreen() {
           </View>
           <ScrollView
             horizontal
+            bounces={false}
+            removeClippedSubviews={false}
+            overScrollMode="never"
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
+            style={{ backgroundColor: theme.background }}
+            contentContainerStyle={[
+              styles.filterRow,
+              { backgroundColor: theme.background },
+            ]}
           >
             {[
               { label: "すべて", value: "all" },
@@ -142,9 +155,11 @@ export default function ActivitiesScreen() {
             ].map((item) => (
               <Pressable
                 key={item.value}
+                android_ripple={{ color: "transparent" }}
                 onPress={() => setSelectedCategory(item.value)}
                 onLongPress={
-                  item.value === "all"
+                  item.value === "all" ||
+                  item.value === UNCATEGORIZED_CATEGORY_KEY
                     ? undefined
                     : () => openCategoryActions(item.value, item.label)
                 }
@@ -211,9 +226,11 @@ export default function ActivitiesScreen() {
                   const category =
                     categories.find((item) => item.key === project.category) ??
                     CATEGORY_MAP[project.category] ??
-                    ACTIVITY_CATEGORIES[0];
+                    UNCATEGORIZED_CATEGORY;
                   const count = activities.filter(
-                    (activity) => activity.projectId === project.id,
+                    (activity) =>
+                      activity.projectId === project.id &&
+                      activity.ownerId === LOCAL_OWNER_ID,
                   ).length;
                   return (
                     <Pressable

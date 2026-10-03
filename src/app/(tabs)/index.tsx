@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Screen } from "@/components/ui/screen";
-import { ACTIVITY_CATEGORIES, CATEGORY_MAP } from "@/constants/categories";
+import { CATEGORY_MAP, UNCATEGORIZED_CATEGORY } from "@/constants/categories";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
@@ -18,7 +19,9 @@ export default function HomeScreen() {
   const projects = useAppStore((state) => state.projects);
   const categories = useAppStore((state) => state.categories);
 
-  const recentActivities = getRecentActivities(activities);
+  const recentActivities = getRecentActivities(
+    activities.filter((activity) => activity.ownerId === LOCAL_OWNER_ID),
+  );
 
   return (
     <Screen>
@@ -85,7 +88,7 @@ export default function HomeScreen() {
           const category =
             categories.find((item) => item.key === categoryKey) ??
             CATEGORY_MAP[categoryKey] ??
-            ACTIVITY_CATEGORIES[0];
+            UNCATEGORIZED_CATEGORY;
 
           return (
             <Pressable

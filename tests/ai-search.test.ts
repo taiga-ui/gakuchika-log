@@ -1,3 +1,4 @@
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { getAiResultSources, resolveAiSource } from "@/utils/ai-search";
 
 describe("AI search source resolution", () => {
@@ -5,6 +6,7 @@ describe("AI search source resolution", () => {
     activities: [
       {
         id: "activity-1",
+        ownerId: LOCAL_OWNER_ID,
         title: "活動記録",
         body: "活動の概要",
       },
@@ -12,6 +14,7 @@ describe("AI search source resolution", () => {
     projects: [
       {
         id: "project-1",
+        ownerId: LOCAL_OWNER_ID,
         name: "プロジェクト",
         description: "プロジェクトの説明",
       },
@@ -19,6 +22,7 @@ describe("AI search source resolution", () => {
     gakuchikaRecords: [
       {
         id: "gakuchika-1",
+        ownerId: LOCAL_OWNER_ID,
         title: "ガクチカ",
         overview: "ガクチカの概要",
       },

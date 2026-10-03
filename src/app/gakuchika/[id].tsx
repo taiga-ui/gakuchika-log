@@ -13,6 +13,7 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
+import { LOCAL_OWNER_ID } from "@/constants/owner";
 import { Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -76,9 +77,14 @@ export default function GakuchikaDetailScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const record = useAppStore((state) =>
-    state.gakuchikaRecords.find((item) => item.id === id),
+    state.gakuchikaRecords.find(
+      (item) => item.id === id && item.ownerId === LOCAL_OWNER_ID,
+    ),
   );
-  const activities = useAppStore((state) => state.activities);
+  const allActivities = useAppStore((state) => state.activities);
+  const activities = allActivities.filter(
+    (activity) => activity.ownerId === LOCAL_OWNER_ID,
+  );
   const updateGakuchika = useAppStore((state) => state.updateGakuchika);
   const saveGakuchika = useAppStore((state) => state.saveGakuchika);
   const saveEsToStore = useAppStore((state) => state.saveEs);

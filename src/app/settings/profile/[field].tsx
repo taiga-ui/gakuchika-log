@@ -103,9 +103,6 @@ export default function ProfileFieldEditScreen() {
       <View style={styles.headerRow}>
         <Pressable onPress={() => router.back()} style={styles.headerAction}>
           <Ionicons name="chevron-back" size={26} color={theme.primary} />
-          <ThemedText type="smallBold" style={{ color: theme.primary }}>
-            戻る
-          </ThemedText>
         </Pressable>
         <ThemedText
           type="smallBold"
@@ -256,12 +253,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: 86,
-    gap: 4,
+    width: 38,
+    alignItems: "flex-start",
   },
-  headerSpacer: { width: 86 },
+  headerSpacer: { width: 38 },
   headerTitle: {
     flex: 1,
     minWidth: 0,
