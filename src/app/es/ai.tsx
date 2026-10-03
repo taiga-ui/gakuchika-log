@@ -5,17 +5,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Screen } from "@/components/ui/screen";
 import { Colors, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { aiSearchService, runAiSearch } from "@/services/ai-search-service";
+import { useAppStore } from "@/store/use-app-store";
 import type { AiSearchState } from "@/types/ai-search";
+import { getAiResultSources, type AiSource } from "@/utils/ai-search";
 
 const suggestionItems = [
   "リーダーシップを発揮した経験",
@@ -32,6 +36,9 @@ export default function AISearchScreen() {
     status: "idle",
     query: "",
   });
+  const activities = useAppStore((state) => state.activities);
+  const projects = useAppStore((state) => state.projects);
+  const gakuchikaRecords = useAppStore((state) => state.gakuchikaRecords);
 
   const submitSearch = async () => {
     const normalizedQuery = query.trim();
@@ -43,6 +50,16 @@ export default function AISearchScreen() {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  const openSource = (source: AiSource) => {
+    if (source.kind === "activity") {
+      router.push(`/activities/${source.id}` as never);
+    } else if (source.kind === "project") {
+      router.push(`/projects/${source.id}` as never);
+    } else {
+      router.push(`/gakuchika/${source.id}` as never);
+    }
+  };
 
   return (
     <Screen scroll={false}>
@@ -76,27 +93,29 @@ export default function AISearchScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.suggestionList}>
-            {suggestionItems.map((item) => (
-              <Pressable
-                key={item}
-                style={styles.suggestionRow}
-                onPress={() => setQuery(item)}
-              >
-                <Ionicons
-                  name="search-outline"
-                  size={24}
-                  color={theme.textTertiary}
-                />
-                <ThemedText
-                  type="default"
-                  style={[styles.suggestionText, { color: theme.text }]}
+          {searchState.status === "idle" ? (
+            <View style={styles.suggestionList}>
+              {suggestionItems.map((item) => (
+                <Pressable
+                  key={item}
+                  style={styles.suggestionRow}
+                  onPress={() => setQuery(item)}
                 >
-                  {item}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </View>
+                  <Ionicons
+                    name="search-outline"
+                    size={24}
+                    color={theme.textTertiary}
+                  />
+                  <ThemedText
+                    type="default"
+                    style={[styles.suggestionText, { color: theme.text }]}
+                  >
+                    {item}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
 
           {searchState.status === "loading" && (
             <ThemedText
@@ -114,14 +133,120 @@ export default function AISearchScreen() {
               {searchState.error.message}
             </ThemedText>
           )}
-          {searchState.status === "success" && (
-            <ThemedText
-              type="small"
-              style={[styles.statusText, { color: theme.textSecondary }]}
-            >
-              {searchState.response.results.length}件の結果
-            </ThemedText>
-          )}
+          {searchState.status === "success" ? (
+            <View style={styles.resultsArea}>
+              <ThemedText
+                type="small"
+                style={[styles.statusText, { color: theme.textSecondary }]}
+              >
+                {searchState.response.results.length}件の結果
+              </ThemedText>
+              {searchState.response.answer ? (
+                <ThemedText
+                  type="small"
+                  style={[styles.answerText, { color: theme.textSecondary }]}
+                >
+                  {searchState.response.answer}
+                </ThemedText>
+              ) : null}
+              <ScrollView
+                style={styles.resultScroll}
+                contentContainerStyle={styles.resultList}
+                showsVerticalScrollIndicator={false}
+              >
+                {searchState.response.results.length ? (
+                  searchState.response.results.map((result) => (
+                    <View
+                      key={result.id}
+                      style={[
+                        styles.resultCard,
+                        { backgroundColor: theme.surface },
+                      ]}
+                    >
+                      <ThemedText
+                        type="subtitle"
+                        style={[styles.resultTitle, { color: theme.text }]}
+                      >
+                        {result.title}
+                      </ThemedText>
+                      <ThemedText
+                        type="small"
+                        style={[
+                          styles.resultSummary,
+                          { color: theme.textSecondary },
+                        ]}
+                      >
+                        {result.summary}
+                      </ThemedText>
+                      <View style={styles.sourceList}>
+                        {getAiResultSources(result, {
+                          activities,
+                          projects,
+                          gakuchikaRecords,
+                        }).map((source) =>
+                          source.kind === "missing" ? (
+                            <View
+                              key={source.id}
+                              style={[styles.sourceRow, { opacity: 0.55 }]}
+                            >
+                              <Ionicons
+                                name="alert-circle-outline"
+                                size={18}
+                                color={theme.textTertiary}
+                              />
+                              <ThemedText
+                                type="small"
+                                style={{ color: theme.textTertiary, flex: 1 }}
+                              >
+                                関連記録が見つかりません（{source.id}）
+                              </ThemedText>
+                            </View>
+                          ) : (
+                            <Pressable
+                              key={source.id}
+                              style={styles.sourceRow}
+                              onPress={() => openSource(source)}
+                            >
+                              <Ionicons
+                                name="arrow-forward-circle-outline"
+                                size={18}
+                                color={theme.primary}
+                              />
+                              <View style={styles.sourceCopy}>
+                                <ThemedText
+                                  type="smallBold"
+                                  style={{ color: theme.primary }}
+                                >
+                                  {source.kind === "activity"
+                                    ? "活動記録"
+                                    : source.kind === "project"
+                                      ? "プロジェクト"
+                                      : "ガクチカ"}
+                                </ThemedText>
+                                <ThemedText
+                                  type="small"
+                                  numberOfLines={1}
+                                  style={{ color: theme.text }}
+                                >
+                                  {source.title}
+                                </ThemedText>
+                              </View>
+                            </Pressable>
+                          ),
+                        )}
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <EmptyState
+                    icon="search-outline"
+                    title="結果が見つかりません"
+                    description="別のキーワードで検索してみてください。"
+                  />
+                )}
+              </ScrollView>
+            </View>
+          ) : null}
 
           <View style={styles.searchInputContainer}>
             <View
@@ -230,14 +355,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchInputContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "68%",
     width: "100%",
     paddingHorizontal: 0,
     justifyContent: "center",
     minHeight: 120,
+    marginTop: "auto",
+    marginBottom: Platform.OS === "ios" ? 48 : 0,
   },
   searchInputShell: {
     flexDirection: "row",
@@ -260,6 +383,52 @@ const styles = StyleSheet.create({
   statusText: {
     marginTop: Spacing.three,
     textAlign: "center",
+  },
+  resultsArea: {
+    flex: 1,
+    minHeight: 0,
+    marginTop: Spacing.two,
+  },
+  answerText: {
+    marginTop: Spacing.two,
+    lineHeight: 21,
+  },
+  resultScroll: {
+    flex: 1,
+    marginTop: Spacing.three,
+  },
+  resultList: {
+    gap: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  resultCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  resultTitle: {
+    fontSize: 18,
+  },
+  resultSummary: {
+    lineHeight: 21,
+  },
+  sourceList: {
+    gap: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.border,
+    paddingTop: Spacing.two,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    minHeight: 32,
+  },
+  sourceCopy: {
+    flex: 1,
+    gap: 2,
   },
   submitButton: {
     width: 46,
