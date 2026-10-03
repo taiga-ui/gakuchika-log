@@ -7,9 +7,12 @@ import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
 import { Screen } from "@/components/ui/screen";
 import {
+  ACTIVITY_OPTIONS,
   GRADE_OPTIONS,
   INDUSTRY_OPTIONS,
+  JOB_OPTIONS,
   PROFILE_FIELD_LABELS,
+  toggleProfileOption,
   type ProfileField,
 } from "@/constants/profile";
 import { Colors, Spacing } from "@/constants/theme";
@@ -17,23 +20,32 @@ import { useTheme } from "@/hooks/use-theme";
 import { useAppStore, waitForPersistence } from "@/store/use-app-store";
 
 const isProfileField = (value: string): value is ProfileField =>
-  ["name", "school", "faculty", "grade", "target"].includes(value);
+  ["grade", "desiredIndustries", "desiredJobs", "mainActivities"].includes(
+    value,
+  );
 
 export default function ProfileFieldEditScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { field: rawField } = useLocalSearchParams<{ field: string }>();
-  const field = isProfileField(rawField) ? rawField : "name";
+  const field = isProfileField(rawField) ? rawField : "grade";
   const profile = useAppStore((state) => state.profile);
   const updateProfile = useAppStore((state) => state.updateProfile);
   const restoreData = useAppStore((state) => state.restoreData);
-  const initialValue = profile[field];
-  const [text, setText] = useState(
-    typeof initialValue === "string" ? initialValue : "",
+  const [otherText, setOtherText] = useState(
+    field === "desiredIndustries"
+      ? (profile.otherIndustry ?? "")
+      : field === "desiredJobs"
+        ? (profile.otherJob ?? "")
+        : (profile.otherActivity ?? ""),
   );
   const [selectedGrade, setSelectedGrade] = useState(profile.grade);
-  const [selectedIndustries, setSelectedIndustries] = useState<string[]>(
-    profile.target,
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(
+    field === "desiredIndustries"
+      ? profile.desiredIndustries
+      : field === "desiredJobs"
+        ? profile.desiredJobs
+        : profile.mainActivities,
   );
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -41,9 +53,19 @@ export default function ProfileFieldEditScreen() {
   const handleSave = async () => {
     if (isSaving) return;
     const snapshot = useAppStore.getState();
-    if (field === "target") updateProfile({ target: selectedIndustries });
-    else if (field === "grade") updateProfile({ grade: selectedGrade });
-    else updateProfile({ [field]: text.trim() } as Partial<typeof profile>);
+    if (field === "grade") {
+      updateProfile({ grade: selectedGrade });
+    } else {
+      const otherValue = otherText.trim();
+      updateProfile({
+        [field]: selectedOptions,
+        ...(field === "desiredIndustries"
+          ? { otherIndustry: otherValue }
+          : field === "desiredJobs"
+            ? { otherJob: otherValue }
+            : { otherActivity: otherValue }),
+      });
+    }
     setIsSaving(true);
     setSaveError("");
     try {
@@ -57,16 +79,27 @@ export default function ProfileFieldEditScreen() {
     }
   };
 
-  const toggleIndustry = (industry: string) => {
-    setSelectedIndustries((current) =>
-      current.includes(industry)
-        ? current.filter((item) => item !== industry)
-        : [...current, industry],
+  const toggleOption = (option: string) => {
+    setSelectedOptions((current) =>
+      toggleProfileOption(
+        current,
+        option,
+        field === "mainActivities" ? 5 : undefined,
+      ),
     );
   };
 
+  const options =
+    field === "desiredIndustries"
+      ? INDUSTRY_OPTIONS
+      : field === "desiredJobs"
+        ? JOB_OPTIONS
+        : ACTIVITY_OPTIONS;
+  const isMultiSelect = field !== "grade";
+  const hasOther = selectedOptions.includes("その他");
+
   return (
-    <Screen>
+    <Screen keyboardAvoiding>
       <View style={styles.headerRow}>
         <Pressable onPress={() => router.back()} style={styles.headerAction}>
           <Ionicons name="chevron-back" size={26} color={theme.primary} />
@@ -74,7 +107,11 @@ export default function ProfileFieldEditScreen() {
             戻る
           </ThemedText>
         </Pressable>
-        <ThemedText type="subtitle" style={{ color: theme.text }}>
+        <ThemedText
+          type="smallBold"
+          numberOfLines={2}
+          style={[styles.headerTitle, { color: theme.text }]}
+        >
           {PROFILE_FIELD_LABELS[field]}の編集
         </ThemedText>
         <View style={styles.headerSpacer} />
@@ -86,31 +123,39 @@ export default function ProfileFieldEditScreen() {
           selected={selectedGrade}
           onSelect={setSelectedGrade}
         />
-      ) : field === "target" ? (
+      ) : isMultiSelect ? (
         <View>
           <ThemedText
             type="small"
             style={[styles.helper, { color: theme.textSecondary }]}
           >
-            複数選択できます
+            {field === "mainActivities"
+              ? "複数選択できます（最大5個）"
+              : "複数選択できます"}
           </ThemedText>
-          {INDUSTRY_OPTIONS.map((industry) => (
+          {options.map((option) => (
             <CheckRow
-              key={industry}
-              label={industry}
-              selected={selectedIndustries.includes(industry)}
-              onPress={() => toggleIndustry(industry)}
+              key={option}
+              label={option}
+              selected={selectedOptions.includes(option)}
+              disabled={
+                field === "mainActivities" &&
+                selectedOptions.length >= 5 &&
+                !selectedOptions.includes(option)
+              }
+              onPress={() => toggleOption(option)}
             />
           ))}
+          {hasOther ? (
+            <FormField
+              label="その他の内容"
+              value={otherText}
+              onChangeText={setOtherText}
+              placeholder="必要に応じて入力"
+            />
+          ) : null}
         </View>
-      ) : (
-        <FormField
-          label={PROFILE_FIELD_LABELS[field]}
-          value={text}
-          onChangeText={setText}
-          placeholder="未設定"
-        />
-      )}
+      ) : null}
 
       <Pressable
         onPress={handleSave}
@@ -165,22 +210,31 @@ function OptionList({
 function CheckRow({
   label,
   selected,
+  disabled = false,
   onPress,
 }: {
   label: string;
   selected: boolean;
+  disabled?: boolean;
   onPress: () => void;
 }) {
   const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={[styles.optionRow, { borderBottomColor: Colors.light.border }]}
     >
       <Ionicons
         name={selected ? "checkbox" : "square-outline"}
         size={24}
-        color={selected ? theme.primary : theme.textTertiary}
+        color={
+          selected
+            ? theme.primary
+            : disabled
+              ? theme.textTertiary
+              : theme.textTertiary
+        }
       />
       <ThemedText type="default" style={{ color: theme.text }}>
         {label}
@@ -208,6 +262,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerSpacer: { width: 86 },
+  headerTitle: {
+    flex: 1,
+    minWidth: 0,
+    textAlign: "center",
+    marginHorizontal: Spacing.two,
+  },
   helper: { marginBottom: Spacing.two },
   optionRow: {
     minHeight: 58,

@@ -32,13 +32,10 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.profileCopy}>
           <ThemedText type="smallBold" style={{ color: theme.text }}>
-            {profile.name}
+            {profile.grade || "学年未設定"}
           </ThemedText>
           <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {profile.school} / {profile.faculty}
-          </ThemedText>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {profile.grade} / {profile.target.join("、")}
+            {profile.desiredIndustries.join("、") || "志望業界未設定"}
           </ThemedText>
         </View>
       </View>

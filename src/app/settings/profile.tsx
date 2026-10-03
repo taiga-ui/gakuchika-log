@@ -10,11 +10,10 @@ import { useTheme } from "@/hooks/use-theme";
 import { useAppStore } from "@/store/use-app-store";
 
 const profileFields: ProfileField[] = [
-  "name",
-  "school",
-  "faculty",
   "grade",
-  "target",
+  "desiredIndustries",
+  "desiredJobs",
+  "mainActivities",
 ];
 
 export default function ProfileEditScreen() {
@@ -24,7 +23,19 @@ export default function ProfileEditScreen() {
 
   const getValue = (field: ProfileField) => {
     const value = profile[field];
-    return Array.isArray(value) ? value.join("、") : value;
+    const customValue =
+      field === "desiredIndustries"
+        ? profile.otherIndustry
+        : field === "desiredJobs"
+          ? profile.otherJob
+          : field === "mainActivities"
+            ? profile.otherActivity
+            : undefined;
+    const values = Array.isArray(value) ? [...value] : [value];
+    if (customValue && values.includes("その他")) {
+      values[values.indexOf("その他")] = `その他（${customValue}）`;
+    }
+    return values.join("、");
   };
 
   return (

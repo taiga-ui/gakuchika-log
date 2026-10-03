@@ -27,7 +27,7 @@ const settingSections: SettingSection[] = [
     rows: [
       {
         label: "プロフィール編集",
-        description: "表示名と学歴情報の変更",
+        description: "学年・志望・活動情報の変更",
         icon: "person-outline",
         iconBg: "#E7F0FF",
         iconColor: "#1A73E8",

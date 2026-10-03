@@ -75,9 +75,11 @@ export type GakuchikaRecord = {
 };
 
 export type ProfileSummary = {
-  name: string;
-  school: string;
-  faculty: string;
   grade: string;
-  target: string[];
+  desiredIndustries: string[];
+  desiredJobs: string[];
+  mainActivities: string[];
+  otherIndustry?: string;
+  otherJob?: string;
+  otherActivity?: string;
 };

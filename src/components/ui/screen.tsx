@@ -1,5 +1,11 @@
 import { Children, type ReactNode } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -8,9 +14,14 @@ import { useTheme } from "@/hooks/use-theme";
 type ScreenProps = {
   children: ReactNode;
   scroll?: boolean;
+  keyboardAvoiding?: boolean;
 };
 
-export function Screen({ children, scroll = true }: ScreenProps) {
+export function Screen({
+  children,
+  scroll = true,
+  keyboardAvoiding = false,
+}: ScreenProps) {
   const theme = useTheme();
   const childArray = Children.toArray(children);
 
@@ -25,6 +36,7 @@ export function Screen({ children, scroll = true }: ScreenProps) {
       ) : null}
       <ScrollView
         contentInsetAdjustmentBehavior="never"
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.scrollContent,
           { backgroundColor: theme.background },
@@ -52,12 +64,23 @@ export function Screen({ children, scroll = true }: ScreenProps) {
     </View>
   );
 
+  const wrappedContent = keyboardAvoiding ? (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.keyboardAvoiding}
+    >
+      {content}
+    </KeyboardAvoidingView>
+  ) : (
+    content
+  );
+
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
-      {content}
+      {wrappedContent}
     </SafeAreaView>
   );
 }
@@ -70,6 +93,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   staticContent: {
+    flex: 1,
+  },
+  keyboardAvoiding: {
     flex: 1,
   },
   inner: {

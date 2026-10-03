@@ -214,6 +214,41 @@ export const normalizeActivityReferences = (
   };
 };
 
+export const normalizeProfile = (
+  profile: unknown,
+  fallback: ProfileSummary = PROFILE,
+): ProfileSummary => {
+  const value = profile && typeof profile === "object" ? profile : {};
+  const persisted = value as Record<string, unknown>;
+  const asString = (key: string) =>
+    typeof persisted[key] === "string" ? persisted[key] : undefined;
+  const asStrings = (key: string) =>
+    Array.isArray(persisted[key])
+      ? persisted[key].filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [];
+
+  return {
+    grade: asString("grade") ?? fallback.grade,
+    desiredIndustries:
+      asStrings("desiredIndustries").length > 0
+        ? asStrings("desiredIndustries")
+        : typeof persisted.target === "string"
+          ? [persisted.target]
+          : asStrings("target"),
+    desiredJobs: asStrings("desiredJobs"),
+    mainActivities: asStrings("mainActivities").slice(0, 5),
+    ...(asString("otherIndustry")
+      ? { otherIndustry: asString("otherIndustry") }
+      : {}),
+    ...(asString("otherJob") ? { otherJob: asString("otherJob") } : {}),
+    ...(asString("otherActivity")
+      ? { otherActivity: asString("otherActivity") }
+      : {}),
+  };
+};
+
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
@@ -333,26 +368,11 @@ export const useAppStore = create<AppState>()(
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<AppState>;
         const persistedProfile = persisted.profile;
-        const isSeedProfile =
-          /^山田[ \u3000]太郎$/.test(persistedProfile?.name ?? "") &&
-          persistedProfile?.school === "Gakuchika University";
 
         const merged = {
           ...currentState,
           ...persisted,
-          profile: isSeedProfile
-            ? currentState.profile
-            : persistedProfile
-              ? {
-                  ...currentState.profile,
-                  ...persistedProfile,
-                  target:
-                    typeof persistedProfile.target === "string"
-                      ? [persistedProfile.target]
-                      : (persistedProfile.target ??
-                        currentState.profile.target),
-                }
-              : currentState.profile,
+          profile: normalizeProfile(persistedProfile, currentState.profile),
           categories: mergeCategories(persisted.categories),
         };
         const legacyEsDrafts = Array.isArray(
