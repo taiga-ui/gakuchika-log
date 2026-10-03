@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Modal, Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { FormField } from "@/components/ui/form-field";
@@ -45,6 +45,7 @@ export default function NewActivityScreen() {
     projectId?: string;
   }>();
   const projects = useAppStore((state) => state.projects);
+  const categories = useAppStore((state) => state.categories);
   const tags = useAppStore((state) => state.tags);
   const activityToEdit = useAppStore((state) =>
     state.activities.find((activity) => activity.id === activityId),
@@ -55,6 +56,10 @@ export default function NewActivityScreen() {
   const addActivity = useAppStore((state) => state.addActivity);
   const updateActivity = useAppStore((state) => state.updateActivity);
   const addTag = useAppStore((state) => state.addTag);
+  const updateTag = useAppStore((state) => state.updateTag);
+  const deleteTag = useAppStore((state) => state.deleteTag);
+  const updateCategory = useAppStore((state) => state.updateCategory);
+  const deleteCategory = useAppStore((state) => state.deleteCategory);
   const clearLastCreatedProject = useAppStore(
     (state) => state.clearLastCreatedProject,
   );
@@ -78,6 +83,12 @@ export default function NewActivityScreen() {
   );
   const [newTagName, setNewTagName] = useState("");
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
+  const [editingTagId, setEditingTagId] = useState<TagId | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [editingCategoryKey, setEditingCategoryKey] = useState<string | null>(
+    null,
+  );
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const selectedDate = parseIsoDate(date);
@@ -155,10 +166,103 @@ export default function NewActivityScreen() {
   const handleAddTag = () => {
     const label = newTagName.trim();
     if (!label) return;
+    if (editingTagId) {
+      updateTag(editingTagId, label);
+      setNewTagName("");
+      setEditingTagId(null);
+      setIsTagModalVisible(false);
+      return;
+    }
     const tag = addTag(label);
     setSelectedTagIds((current) => [...current, tag.id]);
     setNewTagName("");
     setIsTagModalVisible(false);
+  };
+
+  const openTagActions = (tagId: TagId, label: string) => {
+    Alert.alert(label, undefined, [
+      {
+        text: "編集",
+        onPress: () => {
+          setEditingTagId(tagId);
+          setNewTagName(label);
+          setIsTagModalVisible(true);
+        },
+      },
+      {
+        text: "削除",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert(
+            `${label}を削除しますか？`,
+            "活動記録は削除されません。",
+            [
+              { text: "キャンセル", style: "cancel" },
+              {
+                text: "削除",
+                style: "destructive",
+                onPress: () => {
+                  deleteTag(tagId);
+                  setSelectedTagIds((current) =>
+                    current.filter((selectedId) => selectedId !== tagId),
+                  );
+                },
+              },
+            ],
+          );
+        },
+      },
+      { text: "キャンセル", style: "cancel" },
+    ]);
+  };
+
+  const handleSaveCategory = () => {
+    const label = newCategoryName.trim();
+    if (!label || !editingCategoryKey) return;
+    updateCategory(editingCategoryKey, label);
+    setNewCategoryName("");
+    setEditingCategoryKey(null);
+    setIsCategoryModalVisible(false);
+  };
+
+  const openCategoryActions = (key: string, label: string) => {
+    Alert.alert(label, undefined, [
+      {
+        text: "編集",
+        onPress: () => {
+          setEditingCategoryKey(key);
+          setNewCategoryName(label);
+          setIsCategoryModalVisible(true);
+        },
+      },
+      {
+        text: "削除",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert(
+            `${label}を削除しますか？`,
+            "プロジェクトと活動記録は削除されません。",
+            [
+              { text: "キャンセル", style: "cancel" },
+              {
+                text: "削除",
+                style: "destructive",
+                onPress: () => deleteCategory(key),
+              },
+            ],
+          );
+        },
+      },
+      { text: "キャンセル", style: "cancel" },
+    ]);
+  };
+
+  const handleProjectLongPress = (projectId: string) => {
+    const project = projects.find((item) => item.id === projectId);
+    const category = project
+      ? categories.find((item) => item.key === project.category)
+      : undefined;
+    if (category) openCategoryActions(category.key, category.label);
   };
 
   const handleSave = async () => {
@@ -319,6 +423,7 @@ export default function NewActivityScreen() {
                 setSelectedProjectId(project.id);
                 setErrors((current) => ({ ...current, project: "" }));
               }}
+              onLongPress={() => handleProjectLongPress(project.id)}
             />
           ))}
         </View>
@@ -358,11 +463,69 @@ export default function NewActivityScreen() {
               label={tag.label}
               selected={selectedTagIds.includes(tag.id)}
               onPress={() => toggleTag(tag.id)}
+              onLongPress={() => openTagActions(tag.id, tag.label)}
               tone={tag.softColor}
             />
           ))}
         </View>
       </View>
+
+      <Modal
+        visible={isCategoryModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsCategoryModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
+            <ThemedText type="subtitle" style={{ color: theme.text }}>
+              カテゴリを編集
+            </ThemedText>
+            <FormField
+              label="カテゴリ名"
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              placeholder="例: 学外活動"
+            />
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={() => {
+                  setNewCategoryName("");
+                  setEditingCategoryKey(null);
+                  setIsCategoryModalVisible(false);
+                }}
+                style={styles.modalAction}
+              >
+                <ThemedText
+                  type="smallBold"
+                  style={{ color: theme.textSecondary }}
+                >
+                  キャンセル
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                onPress={handleSaveCategory}
+                disabled={!newCategoryName.trim()}
+                style={[
+                  styles.modalAction,
+                  styles.modalPrimaryAction,
+                  {
+                    backgroundColor: theme.primary,
+                    opacity: newCategoryName.trim() ? 1 : 0.5,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="smallBold"
+                  style={{ color: theme.textInverse }}
+                >
+                  保存
+                </ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={isTagModalVisible}
@@ -373,7 +536,7 @@ export default function NewActivityScreen() {
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
             <ThemedText type="subtitle" style={{ color: theme.text }}>
-              タグを追加
+              {editingTagId ? "タグを編集" : "タグを追加"}
             </ThemedText>
             <FormField
               label="タグ名"
@@ -385,6 +548,7 @@ export default function NewActivityScreen() {
               <Pressable
                 onPress={() => {
                   setNewTagName("");
+                  setEditingTagId(null);
                   setIsTagModalVisible(false);
                 }}
                 style={styles.modalAction}
@@ -412,7 +576,7 @@ export default function NewActivityScreen() {
                   type="smallBold"
                   style={{ color: theme.textInverse }}
                 >
-                  追加
+                  {editingTagId ? "保存" : "追加"}
                 </ThemedText>
               </Pressable>
             </View>

@@ -114,6 +114,10 @@ type AppState = {
   ) => Project;
   addCategory: (label: string) => CategoryMeta;
   addTag: (label: string) => TagMeta;
+  updateCategory: (key: string, label: string) => void;
+  deleteCategory: (key: string) => void;
+  updateTag: (id: string, label: string) => void;
+  deleteTag: (id: string) => void;
   clearLastCreatedProject: () => void;
   updateActivity: (id: string, patch: Partial<ActivityRecord>) => void;
   deleteActivity: (id: string) => void;
@@ -304,6 +308,12 @@ export const useAppStore = create<AppState>()(
         });
         return category;
       },
+      updateCategory: (key, label) =>
+        set((state) =>
+          appRepository.updateCategory(toAppData(state), key, label.trim()),
+        ),
+      deleteCategory: (key) =>
+        set((state) => appRepository.deleteCategory(toAppData(state), key)),
       updateProject: (id, patch) =>
         set((state) =>
           appRepository.updateProject(toAppData(state), id, patch),
@@ -318,6 +328,12 @@ export const useAppStore = create<AppState>()(
         });
         return tag;
       },
+      updateTag: (id, label) =>
+        set((state) =>
+          appRepository.updateTag(toAppData(state), id, label.trim()),
+        ),
+      deleteTag: (id) =>
+        set((state) => appRepository.deleteTag(toAppData(state), id)),
       clearLastCreatedProject: () => set({ lastCreatedProjectId: undefined }),
       addGakuchika: (activityIds, title) => {
         let record!: GakuchikaRecord;

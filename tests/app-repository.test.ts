@@ -167,6 +167,63 @@ describe("app repository", () => {
     expect(next.activities[1].categoryKey).toBe("research");
   });
 
+  it("updates and deletes categories without changing projects or activities", () => {
+    const category = { ...ACTIVITY_CATEGORIES[0], key: "custom-category" };
+    const project = makeProject("project-1", category.key);
+    const activity = {
+      ...makeActivity("activity-1", project.id),
+      categoryKey: category.key,
+    };
+    const data = makeData({
+      categories: [category],
+      projects: [project],
+      activities: [activity],
+    });
+
+    const renamed = {
+      ...data,
+      ...repository.updateCategory(data, category.key, "新カテゴリ"),
+    };
+    expect(renamed.categories[0]).toEqual(
+      expect.objectContaining({ key: category.key, label: "新カテゴリ" }),
+    );
+
+    const deleted = {
+      ...renamed,
+      ...repository.deleteCategory(renamed, category.key),
+    };
+    expect(deleted.categories).toEqual([]);
+    expect(deleted.projects).toEqual([project]);
+    expect(deleted.activities).toEqual([activity]);
+  });
+
+  it("updates tag labels and removes only that tag from activities", () => {
+    const data = makeData({
+      tags: [{ ...TAGS[0] }, { ...TAGS[1] }],
+      activities: [
+        {
+          ...makeActivity("activity-1", "project-1"),
+          tagIds: [TAGS[0].id, TAGS[1].id],
+        },
+      ],
+    });
+
+    const renamed = {
+      ...data,
+      ...repository.updateTag(data, TAGS[0].id, "新タグ"),
+    };
+    expect(renamed.tags[0]).toEqual(
+      expect.objectContaining({ id: TAGS[0].id, label: "新タグ" }),
+    );
+
+    const deleted = {
+      ...renamed,
+      ...repository.deleteTag(renamed, TAGS[0].id),
+    };
+    expect(deleted.tags).toEqual([{ ...TAGS[1] }]);
+    expect(deleted.activities[0].tagIds).toEqual([TAGS[1].id]);
+  });
+
   it("accepts ES content at the limit and rejects content over it", () => {
     const data = makeData({
       gakuchikaRecords: [makeGakuchika("gakuchika-1", [])],

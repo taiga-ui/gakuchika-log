@@ -8,6 +8,7 @@ type TagChipProps = {
   label: string;
   selected?: boolean;
   onPress?: () => void;
+  onLongPress?: () => void;
   tone?: string;
 };
 
@@ -15,6 +16,7 @@ export function TagChip({
   label,
   selected = false,
   onPress,
+  onLongPress,
   tone,
 }: TagChipProps) {
   const theme = useTheme();
@@ -22,6 +24,7 @@ export function TagChip({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       style={[
         styles.chip,
         {
