@@ -5,7 +5,6 @@ export const GRADE_OPTIONS = [
   "大学4年生",
   "大学5年生以上",
   "大学院生",
-  "その他",
 ] as const;
 
 export const INDUSTRY_OPTIONS = [
@@ -27,12 +26,53 @@ export const INDUSTRY_OPTIONS = [
   "その他",
 ] as const;
 
-export type ProfileField = "name" | "school" | "faculty" | "grade" | "target";
+export const JOB_OPTIONS = [
+  "エンジニア",
+  "デザイナー",
+  "企画",
+  "営業",
+  "マーケティング",
+  "コンサルタント",
+  "研究・開発",
+  "その他",
+] as const;
+
+export const ACTIVITY_OPTIONS = [
+  "サークル",
+  "アルバイト",
+  "学業・研究",
+  "インターン",
+  "資格・試験",
+  "学生団体",
+  "大学祭・イベント運営",
+  "ボランティア",
+  "個人開発",
+  "その他",
+] as const;
+
+export type ProfileField =
+  | "grade"
+  | "desiredIndustries"
+  | "desiredJobs"
+  | "mainActivities";
 
 export const PROFILE_FIELD_LABELS: Record<ProfileField, string> = {
-  name: "表示名",
-  school: "学校名",
-  faculty: "学部・学科",
   grade: "学年",
-  target: "志望業界",
+  desiredIndustries: "志望業界",
+  desiredJobs: "興味のある職種",
+  mainActivities: "主な活動",
+};
+
+export const toggleProfileOption = (
+  selected: string[],
+  option: string,
+  maxSelections?: number,
+) => {
+  if (selected.includes(option)) {
+    return selected.filter((item) => item !== option);
+  }
+  if (maxSelections !== undefined && selected.length >= maxSelections) {
+    return selected;
+  }
+  return [...selected, option];
 };

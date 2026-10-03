@@ -7,11 +7,10 @@ import type {
 } from "@/types/domain";
 
 export const PROFILE: ProfileSummary = {
-  name: "",
-  school: "",
-  faculty: "",
   grade: "",
-  target: [],
+  desiredIndustries: [],
+  desiredJobs: [],
+  mainActivities: [],
 };
 
 export const MOCK_PROJECTS: Project[] = [

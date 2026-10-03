@@ -14,7 +14,11 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   }),
 }));
 
-import { normalizeActivityReferences } from "@/store/use-app-store";
+import { toggleProfileOption } from "@/constants/profile";
+import {
+  normalizeActivityReferences,
+  normalizeProfile,
+} from "@/store/use-app-store";
 import type { ActivityRecord, GakuchikaRecord, Project } from "@/types/domain";
 
 const makeActivity = (id: string, ownerId: string): ActivityRecord => ({
@@ -83,5 +87,72 @@ describe("app store hydration", () => {
     expect(result.gakuchikaRecords[0].relatedActivityIds).toEqual([
       "activity-local",
     ]);
+  });
+
+  it("normalizes old profile data without retaining personal fields", () => {
+    expect(
+      normalizeProfile({
+        name: "旧ユーザー",
+        school: "旧大学",
+        faculty: "旧学部",
+        grade: "大学2年生",
+        target: "メーカー",
+      }),
+    ).toEqual({
+      grade: "大学2年生",
+      desiredIndustries: ["メーカー"],
+      desiredJobs: [],
+      mainActivities: [],
+    });
+  });
+
+  it("limits main activity selections to five", () => {
+    const selected = [
+      "サークル",
+      "アルバイト",
+      "学業・研究",
+      "インターン",
+      "資格・試験",
+    ];
+    expect(toggleProfileOption(selected, "学生団体", 5)).toEqual(selected);
+    expect(toggleProfileOption(selected, "資格・試験", 5)).toEqual([
+      "サークル",
+      "アルバイト",
+      "学業・研究",
+      "インターン",
+    ]);
+  });
+
+  it("restores multi-select and custom profile values", () => {
+    expect(
+      normalizeProfile({
+        grade: "大学3年生",
+        desiredIndustries: ["IT・Web・ソフトウェア", "メーカー"],
+        desiredJobs: ["エンジニア", "その他"],
+        mainActivities: [
+          "個人開発",
+          "その他",
+          "サークル",
+          "アルバイト",
+          "資格・試験",
+          "学生団体",
+        ],
+        otherJob: "プロダクトマネージャー",
+        otherActivity: "地域活動",
+      }),
+    ).toEqual({
+      grade: "大学3年生",
+      desiredIndustries: ["IT・Web・ソフトウェア", "メーカー"],
+      desiredJobs: ["エンジニア", "その他"],
+      mainActivities: [
+        "個人開発",
+        "その他",
+        "サークル",
+        "アルバイト",
+        "資格・試験",
+      ],
+      otherJob: "プロダクトマネージャー",
+      otherActivity: "地域活動",
+    });
   });
 });
