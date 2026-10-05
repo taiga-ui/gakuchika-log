@@ -9,6 +9,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --runInBand",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint",
+    "format:check": "prettier --check .",
+    "verify": "npm run typecheck && npm run lint && npm test",
     "reset-project": "node ./scripts/reset-project.js"
   },
   "dependencies": {
@@ -42,8 +46,13 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/react": "~19.2.4",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
     "jest": "^30.5.2",
     "jest-expo": "~57.0.0",
+    "prettier": "^3.9.9",
     "typescript": "~6.0.3"
   }
 }
