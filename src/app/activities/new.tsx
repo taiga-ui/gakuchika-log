@@ -147,6 +147,8 @@ export default function NewActivityScreen() {
       lastCreatedProjectId &&
       projects.some((project) => project.id === lastCreatedProjectId)
     ) {
+      // Project作成後に、別の状態から選択Projectを同期するため意図的にstateを更新する
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedProjectId(lastCreatedProjectId);
       clearLastCreatedProject();
     } else if (!selectedProjectId && projects.length) {
